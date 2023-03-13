@@ -20,7 +20,7 @@ example (x y z : ℝ) (h₀ : x ≤ y) (h₁ : y ≤ z) : x ≤ z :=
 begin
   apply le_trans,
   { apply h₀ },
-  apply h₁
+  apply h₁,
 end
 
 example (x y z : ℝ) (h₀ : x ≤ y) (h₁ : y ≤ z) : x ≤ z :=
@@ -55,7 +55,12 @@ le_refl x
 example (h₀ : a ≤ b) (h₁ : b < c) (h₂ : c ≤ d)
     (h₃ : d < e) :
   a < e :=
-sorry
+begin
+  apply lt_of_le_of_lt h₀,
+  apply lt_trans h₁,
+  apply lt_of_le_of_lt h₂,
+  exact h₃,
+end
 
 example (h₀ : a ≤ b) (h₁ : b < c) (h₂ : c ≤ d)
     (h₃ : d < e) :
@@ -105,7 +110,10 @@ end
 
 example (h₀ : d ≤ e) : c + exp (a + d) ≤ c + exp (a + e) :=
 begin
-  sorry
+  apply add_le_add_left,
+  rw exp_le_exp,
+  apply add_le_add_left,
+  exact h₀,
 end
 
 example : (0 : ℝ) < 1 :=
@@ -114,21 +122,36 @@ by norm_num
 example (h : a ≤ b) : log (1 + exp a) ≤ log (1 + exp b) :=
 begin
   have h₀ : 0 < 1 + exp a,
-  { sorry },
+  {
+    apply add_pos,
+    norm_num,
+    apply exp_pos,
+  },
   have h₁ : 0 < 1 + exp b,
-  { sorry },
+  {
+    apply add_pos,
+    norm_num,
+    apply exp_pos,
+  },
   apply (log_le_log h₀ h₁).mpr,
-  sorry
+  apply add_le_add_left,
+  rw exp_le_exp,
+  exact h,
 end
 
     example : 0 ≤ a^2 :=
     begin
-      -- library_search,
-      exact pow_two_nonneg a
+      library_search,
+      -- exact pow_two_nonneg a,
     end
 
 example (h : a ≤ b) : c - exp b ≤ c - exp a :=
-  sorry
+begin
+  apply add_le_add_left,
+  apply neg_le_neg,
+  rw exp_le_exp,
+  exact h,
+end
 
 example : 2*a*b ≤ a^2 + b^2 :=
 begin
@@ -153,7 +176,17 @@ begin
 end
 
 example : abs (a*b) ≤ (a^2 + b^2) / 2 :=
-sorry
+begin
+  have h : 0 ≤ a^2 - 2*a*b + b^2,
+  calc
+    a^2 - 2*a*b + b^2 = (a - b)^2 : by ring
+    ... ≥ 0                       : by apply pow_two_nonneg,
+  have h2 : 0 ≤ a^2 + 2*a*b + b^2,
+    calc
+    a^2 + 2*a*b + b^2 = (a + b)^2 : by ring
+    ... ≥ 0                       : by apply pow_two_nonneg,
+  sorry
+end
 
 #check abs_le'.mpr
 
