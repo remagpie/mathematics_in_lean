@@ -29,22 +29,38 @@ begin
   linarith
 end
 
-example (h : ∀ a, ∃ x, f x < a) : ¬ fn_has_lb f :=
-sorry
+example (h : ∀ a, ∃ x, f x < a) : ¬ fn_has_lb f := begin
+  intros flb,
+  cases flb with a flba,
+  cases h a with x hx,
+  have: f x >= a, from flba x,
+  linarith,
+end
 
-example : ¬ fn_has_ub (λ x, x) :=
-sorry
+example : ¬ fn_has_ub (λ x, x) := begin
+  intros fub,
+  rcases fub with ⟨y, fuby⟩,
+  have: y + 1 <= y, from fuby (y + 1),
+  linarith,
+end
 
 #check (not_le_of_gt : a > b → ¬ a ≤ b)
 #check (not_lt_of_ge : a ≥ b → ¬ a < b)
 #check (lt_of_not_ge : ¬ a ≥ b → a < b)
 #check (le_of_not_gt : ¬ a > b → a ≤ b)
 
-example (h : monotone f) (h' : f a < f b) : a < b :=
-sorry
+example (h : monotone f) (h' : f a < f b) : a < b := begin
+  apply lt_of_not_ge,
+  intros agtb,
+  have: f a >= f b, from h agtb,
+  linarith,
+end
 
-example (h : a ≤ b) (h' : f b < f a) : ¬ monotone f :=
-sorry
+example (h : a ≤ b) (h' : f b < f a) : ¬ monotone f := begin
+  intros mf,
+  have: f a <= f b, from mf h,
+  linarith,
+end
 
 example :
   ¬ ∀ {f : ℝ → ℝ}, monotone f → ∀ {a b}, f a ≤ f b → a ≤ b :=
@@ -156,4 +172,3 @@ begin
 end
 
 end
-
