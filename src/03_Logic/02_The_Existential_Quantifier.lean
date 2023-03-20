@@ -41,12 +41,27 @@ begin
 end
 
 example (lbf : fn_has_lb f) (lbg : fn_has_lb g) :
-  fn_has_lb (λ x, f x + g x) :=
-sorry
+  fn_has_lb (λ x, f x + g x) := begin
+  cases lbf with a lbfa,
+  cases lbg with b lbgb,
+  use a + b,
+  intro x,
+  dsimp,
+  apply add_le_add,
+  apply lbfa,
+  apply lbgb,
+end
 
 example {c : ℝ} (ubf : fn_has_ub f) (h : c ≥ 0):
-  fn_has_ub (λ x, c * f x) :=
-sorry
+  fn_has_ub (λ x, c * f x) := begin
+  cases ubf with a ubfa,
+  use c * a,
+  intro x,
+  dsimp,
+  apply mul_le_mul_of_nonneg_left,
+  apply ubfa,
+  apply h,
+end
 
 example (ubf : fn_has_ub f) (ubg : fn_has_ub g) :
   fn_has_ub (λ x, f x + g x) :=
@@ -106,8 +121,12 @@ begin
   use (d * e), ring
 end
 
-example (divab : a ∣ b) (divac : a ∣ c) : a ∣ (b + c) :=
-sorry
+example (divab : a ∣ b) (divac : a ∣ c) : a ∣ (b + c) := begin
+  rcases divab with ⟨d, rfl⟩,
+  rcases divac with ⟨e, rfl⟩,
+  use (d + e),
+  ring,
+end
 
 end
 
@@ -121,8 +140,13 @@ begin
   dsimp, ring
 end
 
-example {c : ℝ} (h : c ≠ 0) : surjective (λ x, c * x) :=
-sorry
+example {c : ℝ} (h : c ≠ 0) : surjective (λ x, c * x) := begin
+  intro x,
+  use x / c,
+  dsimp,
+  rw mul_div_cancel',
+  apply h,
+end
 
 example (x y : ℝ) (h : x - y ≠ 0) : (x^2 - y^2) / (x - y) = x + y :=
 by { field_simp [h], ring }
@@ -144,6 +168,14 @@ variables {g : β → γ} {f : α → β}
 
 example (surjg : surjective g) (surjf : surjective f) :
   surjective (λ x, g (f x)) :=
-sorry
+begin
+  intros z,
+  cases surjg z with y gy,
+  cases surjf y with x fx,
+  use x,
+  dsimp,
+  rw fx,
+  rw gy,
+end
 
 end
