@@ -68,31 +68,54 @@ begin
   intro h,
   let f := λ x : ℝ, (0 : ℝ),
   have monof : monotone f,
-  { sorry },
+  {
+    intros a b aleb,
+    linarith,
+  },
   have h' : f 1 ≤ f 0,
     from le_refl _,
-  sorry
+  have: (1 : ℝ) <= 0, from h monof h',
+  linarith,
 end
 
-example (x : ℝ) (h : ∀ ε > 0, x < ε) : x ≤ 0 :=
-sorry
+#check le_of_not_gt
+example (x : ℝ) (h : ∀ ε > 0, x < ε) : x ≤ 0 := begin
+  apply le_of_not_gt,
+  intros xgt,
+  have: x > x, from h x xgt,
+  linarith,
+end
 
 end
 
 section
 variables {α : Type*} (P : α → Prop) (Q : Prop)
 
-example (h : ¬ ∃ x, P x) : ∀ x, ¬ P x :=
-sorry
+example (h : ¬ ∃ x, P x) : ∀ x, ¬ P x := begin
+  intro x,
+  intro px,
+  have: ∃ (x: α), P x, {
+    use x,
+    apply px,
+  },
+  apply h this,
+end
 
-example (h : ∀ x, ¬ P x) : ¬ ∃ x, P x :=
-sorry
+example (h : ∀ x, ¬ P x) : ¬ ∃ x, P x := begin
+  intro npx,
+  cases npx with x px,
+  apply h x,
+  apply px,
+end
 
 example (h : ¬ ∀ x, P x) : ∃ x, ¬ P x :=
 sorry
 
-example (h : ∃ x, ¬ P x) : ¬ ∀ x, P x :=
-sorry
+example (h : ∃ x, ¬ P x) : ¬ ∀ x, P x := begin
+  intro apx,
+  cases h with x npx,
+  apply npx (apx x),
+end
 
 open_locale classical
 
@@ -106,11 +129,15 @@ begin
   exact h' ⟨x, h''⟩
 end
 
-example (h : ¬ ¬ Q) : Q :=
-sorry
+example (h : ¬ ¬ Q) : Q := begin
+  by_contradiction h',
+  apply h h',
+end
 
-example (h : Q) : ¬ ¬ Q :=
-sorry
+example (h : Q) : ¬ ¬ Q := begin
+  intro h',
+  apply h' h,
+end
 
 end
 
@@ -118,8 +145,17 @@ open_locale classical
 section
 variable (f : ℝ → ℝ)
 
-example (h : ¬ fn_has_ub f) : ∀ a, ∃ x, f x > a :=
-sorry
+example (h : ¬ fn_has_ub f) : ∀ a, ∃ x, f x > a := begin
+  intro a,
+  by_contradiction g,
+  apply h,
+  use a,
+  intros x,
+  by_contradiction h',
+  apply g,
+  use x,
+  linarith,
+end
 
 example (h : ¬ ∀ a, ∃ x, f x > a) : fn_has_ub f :=
 begin
@@ -134,8 +170,11 @@ begin
   exact h
 end
 
-example (h : ¬ monotone f) : ∃ x y, x ≤ y ∧ f y < f x :=
-sorry
+example (h : ¬ monotone f) : ∃ x y, x ≤ y ∧ f y < f x := begin
+  simp only [monotone] at h,
+  push_neg at h,
+  apply h,
+end
 
 example (h : ¬ fn_has_ub f) : ∀ a, ∃ x, f x > a :=
 begin
