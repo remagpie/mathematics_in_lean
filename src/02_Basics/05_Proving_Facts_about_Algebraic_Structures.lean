@@ -229,11 +229,55 @@ variables a b c : R
 
 #check (mul_nonneg : 0 ≤ a → 0 ≤ b → 0 ≤ a * b)
 
-example : a ≤ b → 0 ≤ b - a := sorry
+example : a ≤ b → 0 ≤ b - a :=
+begin
+  assume h: a ≤ b,
+  rw ←sub_self a,
+  rw [sub_eq_add_neg, add_comm],
+  rw [sub_eq_add_neg, add_comm b],
+  apply add_le_add_left,
+  exact h,
+end
 
-example : 0 ≤ b - a → a ≤ b := sorry
+example : 0 ≤ b - a → a ≤ b :=
+begin
+  assume h: 0 ≤ b - a,
+  rw ←add_zero a,
+  rw ←add_zero b,
+  nth_rewrite 1 ←sub_self a,
+  rw add_sub,
+  nth_rewrite 1 add_comm,
+  rw ←add_sub,
+  apply add_le_add_left,
+  exact h,
+end
 
-example (h : a ≤ b) (h' : 0 ≤ c) : a * c ≤ b * c := sorry
+example (h : a ≤ b) (h' : 0 ≤ c) : a * c ≤ b * c :=
+begin
+  have h2 : 0 ≤ b - a,
+  {
+    rw ←sub_self a,
+    rw [sub_eq_add_neg, add_comm],
+    rw [sub_eq_add_neg, add_comm b],
+    apply add_le_add_left,
+    exact h,
+  },
+  have h3 : 0 ≤ (b - a) * c,
+  {
+    apply mul_nonneg,
+    exact h2,
+    exact h',
+  },
+  rw ←add_zero (b * c),
+  rw ←sub_self (a * c),
+  rw add_sub,
+  rw add_comm,
+  nth_rewrite 0 ←add_zero (a * c),
+  rw ←add_sub,
+  apply add_le_add_left,
+  rw ←sub_mul,
+  exact h3,
+end
 
 end
 
@@ -245,7 +289,18 @@ variables x y z : X
 #check (dist_comm x y : dist x y = dist y x)
 #check (dist_triangle x y z : dist x z ≤ dist x y + dist y z)
 
-example (x y : X) : 0 ≤ dist x y := sorry
+example (x y : X) : 0 ≤ dist x y :=
+begin
+  have h1 : dist x x ≤ dist x y + dist y x,
+  {
+    apply dist_triangle,
+  },
+  nth_rewrite 2 dist_comm at h1,
+  rw dist_self at h1,
+  rw ←two_mul at h1,
+  rw ←zero_mul (dist x y) at h1,
+  linarith,
+end
 
 end
 
