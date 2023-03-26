@@ -47,9 +47,13 @@ end
 example {x y : ℝ} (h : x ≤ y ∧ x ≠ y) : ¬ y ≤ x :=
 λ h', h.right (le_antisymm h.left h')
 
-example {m n : ℕ} (h : m ∣ n ∧ m ≠ n) :
-  m ∣ n ∧ ¬ n ∣ m :=
-sorry
+example {m n : ℕ} (h : m ∣ n ∧ m ≠ n) : m ∣ n ∧ ¬ n ∣ m := begin
+  split,
+  apply h.left,
+  cases h with h₁ h₂,
+  contrapose! h₂,
+  exact nat.dvd_antisymm h₁ h₂,
+end
 
 example : ∃ x : ℝ, 2 < x ∧ x < 4 :=
 ⟨5/2, by norm_num, by norm_num⟩
@@ -95,18 +99,59 @@ end
 example {x y : ℝ} (h : x ≤ y) : ¬ y ≤ x ↔ x ≠ y :=
 ⟨λ h₀ h₁, h₀ (by rw h₁), λ h₀ h₁, h₀ (le_antisymm h h₁)⟩
 
-example {x y : ℝ} : x ≤ y ∧ ¬ y ≤ x ↔ x ≤ y ∧ x ≠ y :=
-sorry
+example {x y : ℝ} : x ≤ y ∧ ¬ y ≤ x ↔ x ≤ y ∧ x ≠ y := begin
+  split,
+  {
+    rintros ⟨h₁, h₂⟩,
+    split,
+    { assumption },
+    contrapose! h₂,
+    apply le_of_eq,
+    rw h₂,
+  },
+  {
+    rintros ⟨h₁, h₂⟩,
+    split,
+    { assumption },
+    contrapose! h₂,
+    apply le_antisymm h₁ h₂,
+  }
+end
 
 theorem aux {x y : ℝ} (h : x^2 + y^2 = 0) : x = 0 :=
 begin
   have h' : x^2 = 0,
-  { sorry },
+  {
+    apply le_antisymm,
+    {
+      have h'': x^2 = -y^2, by linarith,
+      have h''': y^2 >= 0, by apply pow_two_nonneg,
+      linarith,
+    },
+    apply pow_two_nonneg,
+  },
   exact pow_eq_zero h'
 end
 
-example (x y : ℝ) : x^2 + y^2 = 0 ↔ x = 0 ∧ y = 0 :=
-sorry
+example (x y : ℝ) : x^2 + y^2 = 0 ↔ x = 0 ∧ y = 0 := begin
+  have aux': x^2 + y^2 = 0 -> y = 0, {
+    rw add_comm,
+    apply aux,
+  },
+  split,
+  {
+    intros h,
+    split,
+    apply aux h,
+    apply aux' h,
+  },
+  {
+    rintros ⟨xzero, yzero⟩,
+    rw xzero,
+    rw yzero,
+    linarith,
+  }
+end
 
 section
 
@@ -129,8 +174,12 @@ theorem not_monotone_iff {f : ℝ → ℝ}:
   ¬ monotone f ↔ ∃ x y, x ≤ y ∧ f x > f y :=
 by { rw monotone, push_neg }
 
-example : ¬ monotone (λ x : ℝ, -x) :=
-sorry
+example : ¬ monotone (λ x : ℝ, -x) := begin
+  rw monotone,
+  push_neg,
+  use [1, 2],
+  split; linarith,
+end
 
 section
 variables {α : Type*} [partial_order α]
@@ -139,7 +188,25 @@ variables a b : α
 example : a < b ↔ a ≤ b ∧ a ≠ b :=
 begin
   rw lt_iff_le_not_le,
-  sorry
+  split,
+  {
+    rintros ⟨h, g⟩,
+    split,
+    { assumption },
+    {
+      contrapose! g,
+      rw g,
+    },
+  },
+  {
+    rintros ⟨h, g⟩,
+    split,
+    { assumption },
+    {
+      contrapose! g,
+      apply le_antisymm h g,
+    }
+  }
 end
 
 end
@@ -151,13 +218,19 @@ variables a b c : α
 example : ¬ a < a :=
 begin
   rw lt_iff_le_not_le,
-  sorry
+  rintros ⟨h, g⟩,
+  apply g,
+  apply h,
 end
 
 example : a < b → b < c → a < c :=
 begin
   simp only [lt_iff_le_not_le],
-  sorry
+  rintros ⟨h₁, h₂⟩ ⟨g₁, g₂⟩,
+  split,
+  apply le_trans h₁ g₁,
+  contrapose! g₂,
+  apply le_trans g₂ h₁,
 end
 
 end
