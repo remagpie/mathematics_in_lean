@@ -40,21 +40,41 @@ begin
 end
 
 example : max a b = max b a :=
-sorry
+begin
+  apply ge_antisymm,
+  repeat {
+    apply max_le,
+    apply le_max_right,
+    apply le_max_left,
+    },
+end
 
 example : min (min a b) c = min a (min b c) :=
-sorry
+begin
+  exact min_assoc a b c,
+end
 
 lemma aux : min a b + c ≤ min (a + c) (b + c) :=
-sorry
+begin
+  simp,
+end
 
 example : min a b + c = min (a + c) (b + c) :=
-sorry
+begin
+  apply le_antisymm,
+  apply aux,
+  simp,
+  exact le_total a b,
+end
 
 #check (abs_add : ∀ a b : ℝ, abs (a + b) ≤ abs a + abs b)
 
 example : abs a - abs b ≤ abs (a - b) :=
-sorry
+begin
+  have h := abs_add (a - b) b,
+  rw sub_add_cancel at h,
+  linarith,
+end
 
 end
 
@@ -74,7 +94,15 @@ example : x ∣ x^2 :=
 by apply dvd_mul_right
 
 example (h : x ∣ w) : x ∣ y * (x * z) + x^2 + w^2 :=
-sorry
+begin
+  apply dvd_add,
+  apply dvd_add,
+  apply dvd_mul_of_dvd_right,
+  repeat {apply dvd_mul_right},
+  rw pow_two,
+  apply dvd_mul_of_dvd_right,
+  exact h
+end
 
 end
 
@@ -88,6 +116,8 @@ open nat
 #check (lcm_zero_left n  : lcm 0 n = 0)
 
 example : gcd m n = gcd n m :=
-sorry
+begin
+  exact gcd_comm m n,
+end
 
 end

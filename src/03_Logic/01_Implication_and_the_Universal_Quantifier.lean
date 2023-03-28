@@ -41,11 +41,29 @@ lemma my_lemma4 : ∀ {x y ε : ℝ},
   0 < ε → ε ≤ 1 → abs x < ε → abs y < ε → abs (x * y) < ε :=
 begin
   intros x y ε epos ele1 xlt ylt,
+  have x_lt_one : abs x < 1 := by linarith,
   calc
-    abs (x * y) = abs x * abs y : sorry
-    ... ≤ abs x * ε             : sorry
-    ... < 1 * ε                 : sorry
-    ... = ε                     : sorry
+    abs (x * y) = abs x * abs y : by rw [abs_mul]
+    ... ≤ abs x * ε             :
+      begin
+        apply mul_le_mul,
+        apply le_refl,
+        apply le_of_lt,
+        apply ylt,
+        apply abs_nonneg,
+        apply abs_nonneg,
+      end
+    ... < 1 * ε                 :
+      begin
+        rw mul_lt_mul_right,
+        apply x_lt_one,
+        apply epos
+      end
+    ... = ε                     :
+      begin
+        rw mul_comm,
+        rw mul_one
+      end
 end
 
 def fn_ub (f : ℝ → ℝ) (a : ℝ) : Prop := ∀ x, f x ≤ a
@@ -66,16 +84,36 @@ end
 
 example (hfa : fn_lb f a) (hgb : fn_lb g b) :
   fn_lb (λ x, f x + g x) (a + b) :=
-sorry
+begin
+  intro x,
+  dsimp,
+  apply add_le_add,
+  apply hfa,
+  apply hgb
+end
 
 example (nnf : fn_lb f 0) (nng : fn_lb g 0) :
   fn_lb (λ x, f x * g x) 0 :=
-sorry
+begin
+  intro x,
+  change 0 ≤ f x * g x,
+  apply mul_nonneg,
+  apply nnf,
+  apply nng
+end
 
 example (hfa : fn_ub f a) (hfb : fn_ub g b)
     (nng : fn_lb g 0) (nna : 0 ≤ a) :
   fn_ub (λ x, f x * g x) (a * b) :=
-sorry
+begin
+  intro x,
+  change f x * g x ≤ a * b,
+  apply mul_le_mul,
+  apply hfa,
+  apply hfb,
+  apply nng,
+  apply nna
+end
 
 end
 
@@ -113,11 +151,23 @@ example (mf : monotone f) (mg : monotone g) :
 
 example {c : ℝ} (mf : monotone f) (nnc : 0 ≤ c) :
   monotone (λ x, c * f x) :=
-sorry
+begin
+  intros a b aleb,
+  dsimp,
+  apply mul_le_mul_of_nonneg_left,
+  apply mf,
+  apply aleb,
+  apply nnc
+end
 
 example (mf : monotone f) (mg : monotone g) :
   monotone (λ x, f (g x)) :=
-sorry
+begin
+  intros a b aleb,
+  apply mf,
+  apply mg,
+  apply aleb
+end
 
 def fn_even (f : ℝ → ℝ) : Prop := ∀ x, f x = f (-x)
 def fn_odd (f : ℝ → ℝ) : Prop := ∀ x, f x = - f (-x)
@@ -131,13 +181,32 @@ begin
 end
 
 example (of : fn_odd f) (og : fn_odd g) : fn_even (λ x, f x * g x) :=
-sorry
+begin
+  intro x,
+  dsimp,
+  rw of,
+  rw og,
+  rw neg_mul_neg,   
+end
 
+-- simp를 하면 왜 해결되는 것인가??
 example (ef : fn_even f) (og : fn_odd g) : fn_odd (λ x, f x * g x) :=
-sorry
+begin
+  intro x,
+  dsimp,
+  rw ef,
+  rw og,
+  simp,
+end
 
 example (ef : fn_even f) (og : fn_odd g) : fn_even (λ x, f (g x)) :=
-sorry
+begin
+  intro x,
+  dsimp,
+  rw ef,
+  rw og,
+  simp,
+end
 
 end
 
@@ -150,7 +219,12 @@ by { intros x xs, exact xs }
 theorem subset.refl : s ⊆ s := λ x xs, xs
 
 theorem subset.trans : r ⊆ s → s ⊆ t → r ⊆ t :=
-sorry
+begin
+  intros rsubs ssubt x xelmr,
+  apply ssubt,
+  apply rsubs,
+  apply xelmr
+end
 
 end
 
@@ -161,8 +235,12 @@ variables (s : set α) (a b : α)
 
 def set_ub (s : set α) (a : α) := ∀ x, x ∈ s → x ≤ a
 
+
 example (h : set_ub s a) (h' : a ≤ b) : set_ub s b :=
-sorry
+begin
+  intros x xelems,
+  exact le_trans (h x xelems) h'
+end
 
 end
 
@@ -175,14 +253,23 @@ begin
   exact (add_left_inj c).mp h',
 end
 
+-- mul_right_inj' 요거랑 mul_right_inj 요거가 다르네
 example {c : ℝ} (h : c ≠ 0) : injective (λ x, c * x) :=
-sorry
+begin
+  intros x₁ x₂ h',
+  exact (mul_right_inj' h).mp h',
+end
 
 variables {α : Type*} {β : Type*} {γ : Type*}
 variables {g : β → γ} {f : α → β}
 
 example (injg : injective g) (injf : injective f) :
   injective (λ x, g (f x)) :=
-sorry
+begin
+  intros x₁ x₂ h,
+  apply injf,
+  apply injg,
+  apply h,
+end
 
 end

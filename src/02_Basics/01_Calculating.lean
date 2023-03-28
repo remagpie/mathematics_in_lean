@@ -13,12 +13,16 @@ end
 
 example (a b c : ℝ) : (c * b) * a = b * (a * c) :=
 begin
-  sorry
+  rw mul_comm c b,
+  rw mul_assoc b c a,
+  rw mul_comm c a
 end
 
 example (a b c : ℝ) : a * (b * c) = b * (a * c) :=
 begin
-  sorry
+  rw ← mul_assoc a b c,
+  rw mul_comm a b,
+  rw mul_assoc b a c
 end
 
 /- An example. -/
@@ -34,12 +38,15 @@ end
 
 example (a b c : ℝ) : a * (b * c) = b * (c * a) :=
 begin
-  sorry
+  rw mul_comm,
+  rw mul_assoc
 end
 
 example (a b c : ℝ) : a * (b * c) = b * (a * c) :=
 begin
-  sorry
+  rw ← mul_assoc a b c,
+  rw mul_comm a b,
+  rw mul_assoc b a c
 end
 
 /- Using facts from the local context. -/
@@ -58,12 +65,17 @@ end
 example (a b c d e f : ℝ) (h : b * c = e * f) :
   a * b * c * d = a * e * f * d :=
 begin
-  sorry
+  rw mul_assoc a,
+  rw h,
+  rw ← mul_assoc a
 end
 
 example (a b c d : ℝ) (hyp : c = b * a - d) (hyp' : d = a * b) : c = 0 :=
 begin
-  sorry
+  rw hyp,
+  rw mul_comm b a,
+  rw hyp',
+  rw sub_self 
 end
 
 /- Examples. -/
@@ -123,10 +135,20 @@ calc
   (a + b) * (a + b)
       = a * a + b * a + (a * b + b * b) :
     begin
-      sorry
+      rw mul_add,
+      rw add_mul,
+      rw add_mul
     end
-  ... = a * a + (b * a + a * b) + b * b : by sorry
-  ... = a * a + 2 * (a * b) + b * b     : by sorry
+  ... = a * a + (b * a + a * b) + b * b : 
+    begin 
+      rw ←add_assoc,
+      rw add_assoc (a * a)
+    end
+  ... = a * a + 2 * (a * b) + b * b     : 
+    begin 
+      rw mul_comm b a, 
+      rw ←two_mul
+    end
 end
 
 /- Try these. For the second, use the theorems listed underneath. -/
@@ -135,11 +157,42 @@ section
 variables a b c d : ℝ
 
 example : (a + b) * (c + d) = a * c + a * d + b * c + b * d :=
-sorry
+calc
+  (a + b) * (c + d) 
+    = a * c + a * d + b * c + b * d :
+  begin
+    rw mul_add,
+    rw add_mul,
+    rw add_mul,
+    rw ← add_assoc,
+    rw add_assoc (a * c),
+    rw add_comm (b * c),
+    rw ← add_assoc,
+  end
+
 
 example (a b : ℝ) : (a + b) * (a - b) = a^2 - b^2 :=
 begin
-  sorry
+  rw add_mul,
+  rw mul_sub,
+  rw mul_sub,
+  rw mul_comm b,
+  rw add_comm,
+  rw ← add_sub_assoc,
+  rw ← pow_two a,
+  rw ← pow_two b,
+  rw sub_add, 
+  rw sub_sub,
+  rw add_comm,
+  rw ← sub_sub,
+  rw ← sub_add,
+  rw ← sub_mul,
+  rw sub_self,
+  rw zero_mul,
+  rw add_comm,
+  rw zero_sub,
+  rw add_comm,
+  rw neg_add_eq_sub, 
 end
 
 #check pow_two a
@@ -190,3 +243,43 @@ begin
   rw add_mul
 end
 
+example (a b c : ℕ) : a * (b * c) = a * (c * b) :=
+begin
+  conv
+  begin          -- | a * (b * c) = a * (c * b)
+    to_lhs,      -- | a * (b * c)
+    congr,       -- 2 goals : | a and | b * c
+    skip,        -- | b * c
+    rw mul_comm, -- | c * b
+  end
+end
+
+example : (λ x : ℕ, 0 + x) = (λ x, x) :=
+begin
+  conv
+  begin           -- | (λ (x : ℕ), 0 + x) = λ (x : ℕ), x
+    to_lhs,       -- | λ (x : ℕ), 0 + x
+    funext,       -- | 0 + x
+    rw zero_add,  -- | x
+  end
+end
+
+example : (λ x : ℕ, 0+x) = (λ x, x) :=
+by funext ; rw zero_add 
+
+example (a b c : ℕ) : a * (b * c) = a * (c * b) :=
+begin
+conv in (b*c)
+begin          -- | b * c
+  rw mul_comm, -- | c * b
+end
+end
+
+example (a b c : ℕ) : a * (b * c) = a * (c * b) :=
+by conv in (b*c) { rw mul_comm }
+
+example (a b c : ℕ) : a + (b * c) = a + (c * b) :=
+by conv in (_ * c) { rw mul_comm }
+
+example (a b c : ℕ) : (b * c) * (b * c) * (b * c) = (b * c) * (c * b)  * (c * b):=
+by conv { for (b * c) [2, 3] { rw mul_comm } }

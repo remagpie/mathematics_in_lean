@@ -55,7 +55,11 @@ le_refl x
 example (h₀ : a ≤ b) (h₁ : b < c) (h₂ : c ≤ d)
     (h₃ : d < e) :
   a < e :=
-sorry
+begin
+  apply lt_of_le_of_lt h₀,
+  apply lt_trans h₁,
+  exact lt_of_le_of_lt h₂ h₃,
+end
 
 example (h₀ : a ≤ b) (h₁ : b < c) (h₂ : c ≤ d)
     (h₃ : d < e) :
@@ -100,12 +104,14 @@ begin
   apply add_lt_add_of_lt_of_le,
   { apply add_lt_add_of_le_of_lt h₀,
     apply exp_lt_exp.mpr h₁ },
-  apply le_refl
+  apply le_refl,
 end
 
 example (h₀ : d ≤ e) : c + exp (a + d) ≤ c + exp (a + e) :=
 begin
-  sorry
+  have: exp (a + d) ≤ exp (a + e),
+  {rw exp_le_exp, linarith},
+  linarith,
 end
 
 example : (0 : ℝ) < 1 :=
@@ -114,21 +120,25 @@ by norm_num
 example (h : a ≤ b) : log (1 + exp a) ≤ log (1 + exp b) :=
 begin
   have h₀ : 0 < 1 + exp a,
-  { sorry },
+  { linarith [exp_pos a]  },
   have h₁ : 0 < 1 + exp b,
-  { sorry },
+  { linarith [exp_pos b] },
   apply (log_le_log h₀ h₁).mpr,
-  sorry
+  apply add_le_add_left,
+  apply exp_le_exp.mpr h,
 end
 
     example : 0 ≤ a^2 :=
     begin
       -- library_search,
-      exact pow_two_nonneg a
+      exact pow_two_nonneg a,
     end
 
 example (h : a ≤ b) : c - exp b ≤ c - exp a :=
-  sorry
+begin
+  -- library_search,
+  exact sub_le_sub_left (exp_le_exp.mpr h) c,
+end
 
 example : 2*a*b ≤ a^2 + b^2 :=
 begin
@@ -152,8 +162,38 @@ begin
   linarith
 end
 
+lemma lemma_1: a*b*2 ≤ a^2 + b^2 :=
+begin
+  have h : 0 ≤ a^2 - 2*a*b + b^2,
+  calc
+    a^2 - 2*a*b + b^2 = (a - b)^2 : by ring
+    ... ≥ 0                       : by apply pow_two_nonneg,
+  linarith
+end
+
+lemma lemma_2: -(a*b)*2 ≤ a^2 + b^2 :=
+begin
+  have h : 0 ≤ a^2 + 2*a*b + b^2,
+  calc
+    a^2 + 2*a*b + b^2 = (a + b)^2 : by ring
+    ... ≥ 0                       : by apply pow_two_nonneg,
+  linarith
+end
+
 example : abs (a*b) ≤ (a^2 + b^2) / 2 :=
-sorry
+begin
+  have h : (0:ℝ) < 2, { norm_num },
+  rw abs_le',
+  split,
+  {
+    rw le_div_iff h,
+    apply lemma_1,
+  },
+  {
+    rw le_div_iff h,
+    apply lemma_2,
+  },
+end
 
 #check abs_le'.mpr
 

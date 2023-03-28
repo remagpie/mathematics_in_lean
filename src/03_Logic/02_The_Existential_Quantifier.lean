@@ -31,6 +31,11 @@ theorem fn_ub_add {f g : ℝ → ℝ} {a b : ℝ}
 section
 variables {f g : ℝ → ℝ}
 
+-- The cases tactic in Lean is used to perform case analysis on inductive data types,
+-- hypothesis, or goal. It is particularly useful when you want to analyze different cases
+-- or constructors of an inductive data type in your proof. When using the cases tactic, 
+-- Lean generates new subgoals for each constructor or case, 
+-- allowing you to reason about them individually.
 example (ubf : fn_has_ub f) (ubg : fn_has_ub g) :
   fn_has_ub (λ x, f x + g x) :=
 begin
@@ -40,13 +45,51 @@ begin
   apply fn_ub_add ubfa ubfb
 end
 
+-- specialize로 x를 사용할 수 있네
+-- The specialize tactic in Lean is used to instantiate a universally quantified hypothesis
+-- or lemma with specific terms. It replaces a general statement with a more specific version,
+-- which can be useful when you want to apply the statement to a particular case in your proof.
 example (lbf : fn_has_lb f) (lbg : fn_has_lb g) :
   fn_has_lb (λ x, f x + g x) :=
-sorry
+begin
+  cases lbf with a hlf,
+  cases lbg with b hlg,
+  use a + b,
+  intros x,
+  specialize hlf x,
+  specialize hlg x,
+  have fg_sum_ge : f x + g x ≥ a + b,
+  {
+    apply add_le_add,
+    exact hlf,
+    exact hlg,
+  },
+  exact fg_sum_ge,
+end
+
+-- 요건 sepcialize 예제
+example (h : ∀ x : ℕ, x > 0 → x + 1 > x) : 2 + 1 > 2 :=
+begin
+  specialize h 2,
+  apply h,
+  norm_num,
+end
 
 example {c : ℝ} (ubf : fn_has_ub f) (h : c ≥ 0):
   fn_has_ub (λ x, c * f x) :=
-sorry
+begin
+  cases ubf with a ubfa,
+  use c * a,
+  intros x,
+  specialize ubfa x,
+  have cfa_ge : c * f x ≤ c * a,
+  {
+    apply mul_le_mul_of_nonneg_left,
+    exact ubfa,
+    exact h,
+  },
+  exact cfa_ge,
+end
 
 example (ubf : fn_has_ub f) (ubg : fn_has_ub g) :
   fn_has_ub (λ x, f x + g x) :=
@@ -107,7 +150,12 @@ begin
 end
 
 example (divab : a ∣ b) (divac : a ∣ c) : a ∣ (b + c) :=
-sorry
+begin 
+  cases divab with d beq,
+  cases divac with e ceq,
+  rw [beq, ceq],
+  use (d + e), ring,
+end
 
 end
 
@@ -121,8 +169,16 @@ begin
   dsimp, ring
 end
 
+-- The field_simp tactic in Lean is used to simplify expressions involving fields, 
+-- which are mathematical structures that have addition, subtraction, multiplication, and division operations.
 example {c : ℝ} (h : c ≠ 0) : surjective (λ x, c * x) :=
-sorry
+begin
+  intro x,
+  use x / c,
+  dsimp, 
+  field_simp [h],
+  ring
+end
 
 example (x y : ℝ) (h : x - y ≠ 0) : (x^2 - y^2) / (x - y) = x + y :=
 by { field_simp [h], ring }
@@ -144,6 +200,15 @@ variables {g : β → γ} {f : α → β}
 
 example (surjg : surjective g) (surjf : surjective f) :
   surjective (λ x, g (f x)) :=
-sorry
+begin
+  intro y,
+  cases surjg y with b hb,
+  cases surjf b with a ha,
+  use a,
+  dsimp,
+  rw ha,
+  exact hb,
+end
 
 end
+
