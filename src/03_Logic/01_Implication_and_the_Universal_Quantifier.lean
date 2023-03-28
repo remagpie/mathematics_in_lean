@@ -20,7 +20,9 @@ end
 
 lemma my_lemma2 : ∀ {x y ε : ℝ},
   0 < ε → ε ≤ 1 → abs x < ε → abs y < ε → abs (x * y) < ε :=
-sorry
+begin
+  apply my_lemma,
+end
 
 section
   variables a b δ : ℝ
@@ -34,7 +36,11 @@ lemma my_lemma3 : ∀ {x y ε : ℝ},
   0 < ε → ε ≤ 1 → abs x < ε → abs y < ε → abs (x * y) < ε :=
 begin
   intros x y ε epos ele1 xlt ylt,
-  sorry
+  calc
+    abs (x * y) = abs x * abs y : by rw [abs_mul]
+    ... ≤ abs x * ε             : by { apply mul_le_mul }
+    ... < 1 * ε                 : by { apply (mul_lt_mul_right epos).mpr (lt_of_lt_of_le xlt ele1) }
+    ... = ε                     : by rw [one_mul]
 end
 
 lemma my_lemma4 : ∀ {x y ε : ℝ},
@@ -42,10 +48,10 @@ lemma my_lemma4 : ∀ {x y ε : ℝ},
 begin
   intros x y ε epos ele1 xlt ylt,
   calc
-    abs (x * y) = abs x * abs y : sorry
-    ... ≤ abs x * ε             : sorry
-    ... < 1 * ε                 : sorry
-    ... = ε                     : sorry
+    abs (x * y) = abs x * abs y : by rw [abs_mul]
+    ... ≤ abs x * ε             : by { apply mul_le_mul_of_nonneg_left, exact xlt.le, exact ele1.le }
+    ... < 1 * ε                 : by { apply mul_le_mul_of_nonneg_right, exact ylt.le, exact zero_le_one }
+    ... = ε                     : by rw mul_one,
 end
 
 def fn_ub (f : ℝ → ℝ) (a : ℝ) : Prop := ∀ x, f x ≤ a
@@ -66,17 +72,71 @@ end
 
 example (hfa : fn_lb f a) (hgb : fn_lb g b) :
   fn_lb (λ x, f x + g x) (a + b) :=
-sorry
+begin
+  intro x,
+  dsimp,
+  apply add_le_add,
+  apply hfa,
+  apply hgb,
+end
+
+-- ↑ChatGPT
+example (hfa : fn_lb f a) (hgb : fn_lb g b) :
+  fn_lb (λ x, f x + g x) (a + b) :=
+begin
+  intro x,
+  specialize hfa x,
+  specialize hgb x,
+  exact add_le_add hfa hgb,
+end
+
 
 example (nnf : fn_lb f 0) (nng : fn_lb g 0) :
   fn_lb (λ x, f x * g x) 0 :=
-sorry
+begin
+  intro x,
+  dsimp,
+  apply mul_nonneg,
+  apply nnf,
+  apply nng,
+end
+
+-- ↑ChatGPT
+example (nnf : fn_lb f 0) (nng : fn_lb g 0) :
+  fn_lb (λ x, f x * g x) 0 :=
+begin
+  intro x,
+  specialize nnf x,
+  specialize nng x,
+  exact mul_nonneg nnf nng,
+end
 
 example (hfa : fn_ub f a) (hfb : fn_ub g b)
     (nng : fn_lb g 0) (nna : 0 ≤ a) :
   fn_ub (λ x, f x * g x) (a * b) :=
-sorry
+begin
+  intro x,
+  dsimp,
+  apply mul_le_mul,
+  apply hfa,
+  apply hfb,
+  apply nng,
+  apply nna,
+  -- apply [hfa, hfb, nng, nna],
+end
 
+-- ↑ChatGPT
+example (hfa : fn_ub f a) (hfb : fn_ub g b)
+    (nng : fn_lb g 0) (nna : 0 ≤ a) :
+  fn_ub (λ x, f x * g x) (a * b) :=
+begin
+  intro x,
+  specialize hfa x,
+  specialize hfb x,
+  specialize nng x,
+  have hfg := mul_le_mul_of_nonneg_left hfb nna,
+  have hgf := mul_le_mul_of_nonneg_right hfa nng,
+  exact le_trans hgf hfg,
 end
 
 section
@@ -113,7 +173,6 @@ example (mf : monotone f) (mg : monotone g) :
 
 example {c : ℝ} (mf : monotone f) (nnc : 0 ≤ c) :
   monotone (λ x, c * f x) :=
-sorry
 
 example (mf : monotone f) (mg : monotone g) :
   monotone (λ x, f (g x)) :=
