@@ -26,20 +26,88 @@ end
 
 namespace my_abs
 
-theorem le_abs_self (x : ℝ) : x ≤ abs x :=
-sorry
+theorem le_abs_self (x : ℝ) : x ≤ abs x := begin
+  cases le_or_gt 0 x with h h,
+  { rw abs_of_nonneg h },
+  rw abs_of_neg h,
+  linarith,
+end
 
-theorem neg_le_abs_self (x : ℝ) : -x ≤ abs x :=
-sorry
+theorem neg_le_abs_self (x : ℝ) : -x ≤ abs x := begin
+  cases le_or_gt 0 x with h h,
+  {
+    rw abs_of_nonneg h,
+    linarith,
+  },
+  rw abs_of_neg h,
+end
 
-theorem abs_add (x y : ℝ) : abs (x + y) ≤ abs x + abs y :=
-sorry
+theorem abs_add (x y : ℝ) : abs (x + y) ≤ abs x + abs y := begin
+  cases le_or_gt 0 (x + y) with h h,
+  {
+    rw abs_of_nonneg h,
+    apply add_le_add (le_abs_self x) (le_abs_self y),
+  },
+  rw abs_of_neg h,
+  rw neg_add,
+  apply add_le_add (neg_le_abs_self x) (neg_le_abs_self y),
+end
 
-theorem lt_abs : x < abs y ↔ x < y ∨ x < -y :=
-sorry
+theorem lt_abs : x < abs y ↔ x < y ∨ x < -y := begin
+  cases le_or_gt 0 y with h h,
+  {
+    rw abs_of_nonneg h,
+    split,
+    {
+      intro h',
+      left,
+      apply h',
+    },
+    {
+      intro h',
+      cases h'; linarith,
+    },
+  },
+  rw abs_of_neg h,
+  split,
+  {
+    intro h',
+    right,
+    apply h',
+  },
+  {
+    intro h',
+    cases h'; linarith,
+  }
+end
 
-theorem abs_lt : abs x < y ↔ - y < x ∧ x < y :=
-sorry
+theorem abs_lt : abs x < y ↔ - y < x ∧ x < y := begin
+  cases le_or_gt 0 x with h h,
+  {
+    rw abs_of_nonneg h,
+    split,
+    {
+      intro h',
+      split; linarith,
+    },
+    {
+      intro h',
+      cases h'; linarith,
+    },
+  },
+  {
+    rw abs_of_neg h,
+    split,
+    {
+      intro h',
+      split; linarith,
+    },
+    {
+      intro h',
+      cases h'; linarith,
+    },
+  }
+end
 
 end my_abs
 end
@@ -62,24 +130,67 @@ begin
 end
 
 example {z : ℝ} (h : ∃ x y, z = x^2 + y^2 ∨ z = x^2 + y^2 + 1) :
-  z ≥ 0 :=
-sorry
+  z ≥ 0 := begin
+  rcases h with ⟨x, y, rfl | rfl⟩; sorry
+end
 
-example {x : ℝ} (h : x^2 = 1) : x = 1 ∨ x = -1 :=
-sorry
+example {x : ℝ} (h : x^2 = 1) : x = 1 ∨ x = -1 := begin
+  have h': (x - 1) * (x + 1) = 0, by linarith,
+  cases eq_zero_or_eq_zero_of_mul_eq_zero h',
+  { left, linarith },
+  { right, linarith },
+end
 
-example {x y : ℝ} (h : x^2 = y^2) : x = y ∨ x = -y :=
-sorry
+example {x y : ℝ} (h : x^2 = y^2) : x = y ∨ x = -y := begin
+  have h': (x - y) * (x + y) = 0, by linarith,
+  cases eq_zero_or_eq_zero_of_mul_eq_zero h',
+  { left, linarith },
+  { right, linarith },
+end
 
 section
 variables {R : Type*} [comm_ring R] [is_domain R]
 variables (x y : R)
 
-example (h : x^2 = 1) : x = 1 ∨ x = -1 :=
-sorry
+example (h : x^2 = 1) : x = 1 ∨ x = -1 := begin
+  have h': (x - 1) * (x + 1) = 0, {
+    ring,
+    apply sub_eq_zero.mpr,
+    assumption,
+  },
+  cases eq_zero_or_eq_zero_of_mul_eq_zero h',
+  {
+    left,
+    apply sub_eq_zero.mp,
+    assumption,
+  },
+  {
+    right,
+    apply sub_eq_zero.mp,
+    ring,
+    assumption,
+  },
+end
 
-example (h : x^2 = y^2) : x = y ∨ x = -y :=
-sorry
+example (h : x^2 = y^2) : x = y ∨ x = -y := begin
+  have h': (x - y) * (x + y) = 0, {
+    ring,
+    apply sub_eq_zero.mpr,
+    assumption,
+  },
+  cases eq_zero_or_eq_zero_of_mul_eq_zero h',
+  {
+    left,
+    apply sub_eq_zero.mp,
+    assumption,
+  },
+  {
+    right,
+    apply sub_eq_zero.mp,
+    ring,
+    assumption,
+  },
+end
 
 end
 
@@ -102,7 +213,28 @@ begin
   contradiction
 end
 
-example (P Q : Prop) : (P → Q) ↔ ¬ P ∨ Q :=
-sorry
+example (P Q : Prop) : (P → Q) ↔ ¬ P ∨ Q := begin
+  split,
+  {
+    intro h,
+    by_cases h': P,
+    {
+      right,
+      apply h h',
+    },
+    left,
+    assumption,
+  },
+  {
+    intro h,
+    by_cases h': P; intros, {
+      rcases h with np | q,
+      { contradiction },
+      { assumption },
+    },
+    intros,
+    contradiction,
+  }
+end
 
 end
