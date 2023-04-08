@@ -35,7 +35,30 @@ begin
   cases cs (ε / 2) ε2pos with Ns hs,
   cases ct (ε / 2) ε2pos with Nt ht,
   use max Ns Nt,
-  sorry
+  intros n ns_nt_le,
+  have sna: |s n - a| < ε / 2, {
+    convert hs n _,
+    apply le_of_max_le_left ns_nt_le,
+  },
+  have tnb: |t n - b| < ε / 2, {
+    convert ht n _,
+    apply le_of_max_le_right ns_nt_le,
+  },
+  have h: |s n + t n - (a + b)| <= |s n - a| + |t n - b|, {
+    rw add_sub_add_comm,
+    apply abs_add,
+  },
+  have h': |s n - a| + |t n - b| < ε, {
+    rw <-half_add_self ε,
+    rw add_div,
+    apply add_lt_add,
+    apply sna,
+    apply tnb,
+  },
+  cases lt_or_eq_of_le h with hlt heq,
+  { apply lt_trans hlt h' },
+  rw heq,
+  apply h',
 end
 
 theorem converges_to_mul_const {s : ℕ → ℝ} {a : ℝ}
@@ -48,7 +71,30 @@ begin
     rw [h, zero_mul] },
   have acpos : 0 < abs c,
     from abs_pos.mpr h,
-  sorry
+  intros ε εpos,
+  have c_εpos: ε / |c| > 0, from div_pos εpos acpos,
+  dsimp,
+  cases cs (ε / |c|) c_εpos with N h',
+  use N,
+  intros n nge,
+  rw <-mul_sub,
+  rw abs_mul,
+  rw <-mul_one ε,
+  rw <-div_self (ne_of_gt acpos),
+  rw mul_div,
+  rw mul_comm ε,
+  let g' := h' n nge,
+  sorry,
+  -- rw mul_lt_mul_left acpos,
+
+  -- let ε_c := ε / |c|,
+  -- have ε_c_mul: ε = ε_c * |c|, {
+  --   rw ε_c,
+
+  -- }
+  -- rw ε_c,
+  -- apply lt_div_iff_mul_lt.mp g',
+  -- dsimp,
 end
 
 theorem exists_abs_le_of_converges_to {s : ℕ → ℝ} {a : ℝ}
@@ -57,7 +103,8 @@ theorem exists_abs_le_of_converges_to {s : ℕ → ℝ} {a : ℝ}
 begin
   cases cs 1 zero_lt_one with N h,
   use [N, abs a + 1],
-  sorry
+  intros n nge,
+  sorry,
 end
 
 lemma aux {s t : ℕ → ℝ} {a : ℝ}
@@ -116,4 +163,3 @@ def converges_to' (s : α → ℝ) (a : ℝ) :=
 ∀ ε > 0, ∃ N, ∀ n ≥ N, abs (s n - a) < ε
 
 end
-
