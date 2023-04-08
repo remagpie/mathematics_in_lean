@@ -52,13 +52,27 @@ end
 
 example : s ∩ (t ∪ u) ⊆ (s ∩ t) ∪ (s ∩ u) :=
 begin
-  rintros x ⟨xs, xt | xu⟩,
+  rintros x,
+  rintros ⟨xs, xt | xu⟩,
   { left, exact ⟨xs, xt⟩ },
   right, exact ⟨xs, xu⟩
 end
 
-example : (s ∩ t) ∪ (s ∩ u) ⊆ s ∩ (t ∪ u):=
-sorry
+example : (s ∩ t) ∪ (s ∩ u) ⊆ s ∩ (t ∪ u) := begin
+  rintros x (⟨xs, xt⟩ | ⟨xs, xu⟩),
+  {
+    split,
+    { apply xs },
+    apply mem_union_left,
+    apply xt,
+  },
+  {
+    split,
+    { apply xs },
+    apply mem_union_right,
+    apply xu,
+  },
+end
 
 example : s \ t \ u ⊆ s \ (t ∪ u) :=
 begin
@@ -81,8 +95,20 @@ begin
   rintros (xt | xu); contradiction
 end
 
-example : s \ (t ∪ u) ⊆ s \ t \ u :=
-sorry
+example : s \ (t ∪ u) ⊆ s \ t \ u := begin
+  rintros x ⟨xs, xtu⟩,
+  split,
+  {
+    split,
+    { apply xs },
+    contrapose! xtu,
+    apply mem_union_left,
+    apply xtu,
+  },
+  contrapose! xtu,
+  apply mem_union_right,
+  apply xtu,
+end
 
 example : s ∩ t = t ∩ s :=
 begin
@@ -107,19 +133,60 @@ begin
 end
 
 example : s ∩ t = t ∩ s :=
-subset.antisymm sorry sorry
+subset.antisymm (λ x ⟨xs, xt⟩, ⟨xt, xs⟩) (λ x ⟨xt, xs⟩, ⟨xs, xt⟩)
 
-example : s ∩ (s ∪ t) = s :=
-sorry
+example : s ∩ (s ∪ t) = s := begin
+  ext x,
+  simp,
+  intro xs,
+  left,
+  apply xs,
+end
 
-example : s ∪ (s ∩ t) = s :=
-sorry
+example : s ∪ (s ∩ t) = s := begin
+  ext x,
+  simp,
+  intros xs xt,
+  apply xs,
+end
 
-example : (s \ t) ∪ t = s ∪ t :=
-sorry
+example : (s \ t) ∪ t = s ∪ t := begin
+  ext x,
+  simp,
+end
 
-example : (s \ t) ∪ (t \ s) = (s ∪ t) \ (s ∩ t) :=
-sorry
+example : (s \ t) ∪ (t \ s) = (s ∪ t) \ (s ∩ t) := begin
+  ext x,
+  simp,
+  split,
+  {
+    rintros (⟨xs, xnt⟩ | ⟨xt, xns⟩),
+    {
+      split,
+      { left, apply xs},
+      intros xs',
+      apply xnt,
+    },
+    {
+      split,
+      { right, apply xt},
+      intros xs,
+      contradiction,
+    },
+  },
+  rintros ⟨xs | xt, xsnt⟩,
+  {
+    left,
+    exact ⟨xs, xsnt xs⟩,
+  },
+  {
+    right,
+    split,
+    { apply xt },
+    contrapose! xt,
+    apply xsnt xt,
+  },
+end
 
 
 def evens : set ℕ := {n | even n}
@@ -139,8 +206,16 @@ h
 example (x : ℕ) : x ∈ (univ : set ℕ) :=
 trivial
 
-example : { n | nat.prime n } ∩ { n | n > 2} ⊆ { n | ¬ even n } :=
-sorry
+example : { n | nat.prime n } ∩ { n | n > 2} ⊆ { n | ¬ even n } := begin
+  intro n,
+  simp,
+  intros pn ngt2,
+  cases nat.prime.eq_two_or_odd pn with h h,
+  { linarith },
+  contrapose! h,
+  have h': n % 2 = 0, from nat.even_iff.mp h,
+  linarith,
+end
 
 #print prime
 #print nat.prime
@@ -179,12 +254,18 @@ variable (ssubt : s ⊆ t)
 include ssubt
 
 example (h₀ : ∀ x ∈ t, ¬ even x) (h₁ : ∀ x ∈ t, prime x) :
-  ∀ x ∈ s, ¬ even x ∧ prime x :=
-sorry
+  ∀ x ∈ s, ¬ even x ∧ prime x := begin
+  intros x xs,
+  split,
+  { apply h₀ x (ssubt xs) },
+  apply h₁ x (ssubt xs),
+end
 
 example (h : ∃ x ∈ s, ¬ even x ∧ prime x) :
-  ∃ x ∈ t, prime x :=
-sorry
+  ∃ x ∈ t, prime x := begin
+  rcases h with ⟨x, xs, _, prime_x⟩,
+  use [x, (ssubt xs), prime_x]
+end
 
 end
 
@@ -226,8 +307,24 @@ end
 
 open_locale classical
 
-example : s ∪ (⋂ i, A i) = ⋂ i, (A i ∪ s) :=
-sorry
+example : s ∪ (⋂ i, A i) = ⋂ i, (A i ∪ s) := begin
+  ext x,
+  simp,
+  split,
+  {
+    rintros (xs | xi); intro i,
+    {right, exact xs},
+    left, exact xi i,
+  },
+  intro h,
+  by_cases xs: x ∈ s,
+  {left, exact xs},
+  right,
+  intro i,
+  contrapose! h,
+  use i,
+  exact ⟨h, xs⟩,
+end
 
 def primes : set ℕ := {x | nat.prime x}
 
@@ -245,8 +342,15 @@ begin
   apply nat.exists_prime_and_dvd
 end
 
-example : (⋃ p ∈ primes, {x | x ≤ p}) = univ :=
-sorry
+example : (⋃ p ∈ primes, {x | x ≤ p}) = univ := begin
+  apply eq_univ_of_forall,
+  simp,
+  intro x,
+  cases (nat.exists_infinite_primes x) with i h,
+  use i,
+  rw and_comm,
+  apply h,
+end
 
 end
 
@@ -270,4 +374,3 @@ begin
 end
 
 end
-
