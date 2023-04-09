@@ -32,50 +32,179 @@ begin
   use [x, xs]
 end
 
-example : f '' s ⊆ v ↔ s ⊆ f ⁻¹' v :=
-sorry
+example : f '' s ⊆ v ↔ s ⊆ f ⁻¹' v := begin
+  split; intros ssv x xs,
+  {
+    apply ssv,
+    use [x, xs],
+  },
+  rcases xs with ⟨x', xs', rfl⟩,
+  let h := ssv xs',
+  use h,
+end
 
-example (h : injective f) : f ⁻¹' (f '' s) ⊆ s :=
-sorry
+example (h : injective f) : f ⁻¹' (f '' s) ⊆ s := begin
+  intros x,
+  simp,
+  intros y ys fyx,
+  let g := h fyx,
+  rw <-g,
+  apply ys,
+end
 
-example : f '' (f⁻¹' u) ⊆ u :=
-sorry
+example : f '' (f⁻¹' u) ⊆ u := begin
+  intros x,
+  simp,
+  intros y fyu fyx,
+  rw fyx at fyu,
+  apply fyu,
+end
+-- ??
+example : f '' (f⁻¹' u) ⊆ u := begin
+  simp,
+end
 
-example (h : surjective f) : u ⊆ f '' (f⁻¹' u) :=
-sorry
+example (h : surjective f) : u ⊆ f '' (f⁻¹' u) := begin
+  intros x xu,
+  simp,
+  rcases h x with ⟨y, fyx⟩,
+  use y,
+  rw <-fyx at xu,
+  exact ⟨xu, fyx⟩
+end
 
-example (h : s ⊆ t) : f '' s ⊆ f '' t :=
-sorry
+example (h : s ⊆ t) : f '' s ⊆ f '' t := begin
+  simp,
+  intros x xs,
+  simp,
+  use x,
+  exact ⟨h xs, rfl⟩
+end
 
-example (h : u ⊆ v) : f ⁻¹' u ⊆ f ⁻¹' v :=
-sorry
+example (h : u ⊆ v) : f ⁻¹' u ⊆ f ⁻¹' v := begin
+  intros x,
+  simp,
+  intros fxu,
+  apply h fxu,
+end
 
-example : f ⁻¹' (u ∪ v) = f ⁻¹' u ∪ f ⁻¹' v :=
-sorry
+example : f ⁻¹' (u ∪ v) = f ⁻¹' u ∪ f ⁻¹' v := begin
+  ext x,
+  dsimp,
+  refl,
+end
+-- ??
+example : f ⁻¹' (u ∪ v) = f ⁻¹' u ∪ f ⁻¹' v := begin
+  simp,
+end
 
-example : f '' (s ∩ t) ⊆ f '' s ∩ f '' t :=
-sorry
+example : f '' (s ∩ t) ⊆ f '' s ∩ f '' t := begin
+  simp,
+  split; rintros x ⟨xs, xt⟩; simp; use x,
+  { exact ⟨xs, rfl⟩ },
+  { exact ⟨xt, rfl⟩ },
+end
 
-example (h : injective f) : f '' s ∩ f '' t ⊆ f '' (s ∩ t) :=
-sorry
+example (h : injective f) : f '' s ∩ f '' t ⊆ f '' (s ∩ t) := begin
+  intros x,
+  rintros ⟨xfs, xft⟩,
+  rcases xfs with ⟨y, ⟨ys, fyx⟩⟩,
+  rcases xft with ⟨y', ⟨y't, fy'x⟩⟩,
+  simp,
+  use y,
+  split,
+  {
+    rw <-fy'x at fyx,
+    let g := h fyx,
+    rw <-g at y't,
+    exact ⟨ys, y't⟩
+  },
+  exact fyx,
+end
 
-example : f '' s \ f '' t ⊆ f '' (s \ t) :=
-sorry
+example : f '' s \ f '' t ⊆ f '' (s \ t) := begin
+  rintros x ⟨xfs, xnft⟩,
+  rcases xfs with ⟨y, ⟨ys, fyx⟩⟩,
+  simp,
+  use y,
+  split,
+  {
+    split,
+    { exact ys },
+    contrapose! xnft,
+    simp,
+    use y,
+    exact ⟨xnft, fyx⟩,
+  },
+  exact fyx,
+end
 
-example : f ⁻¹' u \ f ⁻¹' v ⊆ f ⁻¹' (u \ v) :=
-sorry
+example : f ⁻¹' u \ f ⁻¹' v ⊆ f ⁻¹' (u \ v) := begin
+  intros x,
+  simp,
+  intros fxu fxnv,
+  exact ⟨fxu, fxnv⟩
+end
+-- ??
+example : f ⁻¹' u \ f ⁻¹' v ⊆ f ⁻¹' (u \ v) := begin
+  simp,
+end
 
-example : f '' s ∩ v = f '' (s ∩ f ⁻¹' v) :=
-sorry
+example : f '' s ∩ v = f '' (s ∩ f ⁻¹' v) := begin
+  ext x,
+  split,
+  {
+    rintros ⟨⟨y, ⟨ys, fyx⟩⟩, xv⟩,
+    simp,
+    use y,
+    rw <-fyx at xv,
+    exact ⟨⟨ys, xv⟩, fyx⟩
+  },
+  rintros ⟨y, ⟨⟨ys, yfv⟩, fyx⟩⟩,
+  simp at yfv,
+  split,
+  {
+    use y,
+    exact ⟨ys, fyx⟩,
+  },
+  rw fyx at yfv,
+  exact yfv,
+end
 
-example : f '' (s ∩ f ⁻¹' u) ⊆ f '' s ∪ u :=
-sorry
+example : f '' (s ∩ f ⁻¹' u) ⊆ f '' s ∪ u := begin
+  intros x,
+  rintros ⟨y, ⟨⟨ys, h⟩, yfx⟩⟩,
+  simp at h,
+  left,
+  use y,
+  exact ⟨ys, yfx⟩,
+end
 
-example : s ∩ f ⁻¹' u ⊆ f ⁻¹' (f '' s ∩ u) :=
-sorry
+example : s ∩ f ⁻¹' u ⊆ f ⁻¹' (f '' s ∩ u) := begin
+  intros x,
+  rintros ⟨xs, h⟩,
+  simp at h,
+  split,
+  {
+    simp,
+    use x,
+    exact ⟨xs, rfl⟩,
+  },
+  apply h,
+end
 
-example : s ∪ f ⁻¹' u ⊆ f ⁻¹' (f '' s ∪ u) :=
-sorry
+example : s ∪ f ⁻¹' u ⊆ f ⁻¹' (f '' s ∪ u) := begin
+  intros x,
+  rintros (xs | h); simp,
+  {
+    left,
+    use x,
+    exact ⟨xs, rfl⟩
+  },
+  simp at h,
+  right,
+  exact h,
+end
 
 variables {I : Type*} (A : I → set α) (B : I → set β)
 
@@ -143,17 +272,54 @@ begin
   rw exp_log ypos
 end
 
-example : inj_on sqrt { x | x ≥ 0 } :=
-sorry
+example : inj_on sqrt { x | x ≥ 0 } := begin
+  intros x xpos y ypos,
+  intro h,
+  calc
+    x   = sqrt x ^ 2 : by rw sq_sqrt xpos
+    ... = sqrt y ^ 2 : by rw h
+    ... = y          : by rw sq_sqrt ypos
+end
 
-example : inj_on (λ x, x^2) { x : ℝ | x ≥ 0 } :=
-sorry
+example : inj_on (λ x, x^2) { x : ℝ | x ≥ 0 } := begin
+  intros x xpos y ypos,
+  intro h,
+  simp at h,
+  calc
+    x   = sqrt (x ^ 2) : by rw sqrt_sq xpos
+    ... = sqrt (y ^ 2) : by rw h
+    ... = y            : by rw sqrt_sq ypos
+end
 
-example : sqrt '' { x | x ≥ 0 } = {y | y ≥ 0} :=
-sorry
+example : sqrt '' { x | x ≥ 0 } = {y | y ≥ 0} := begin
+  ext x,
+  split,
+  {
+    simp,
+    intros y ypos,
+    intro h,
+    rw <-h,
+    apply sqrt_nonneg,
+  },
+  simp,
+  intros xpos,
+  use (x ^ 2),
+  exact ⟨sq_nonneg x, sqrt_sq xpos⟩,
+end
 
-example : range (λ x, x^2) = {y : ℝ  | y ≥ 0} :=
-sorry
+example : range (λ x, x^2) = {y : ℝ  | y ≥ 0} := begin
+  ext x,
+  simp,
+  split,
+  {
+    rintros ⟨y, h⟩,
+    rw <-h,
+    apply sq_nonneg y,
+  },
+  intros xpos,
+  use (sqrt x),
+  apply sq_sqrt xpos,
+end
 
 end
 
@@ -184,8 +350,31 @@ end
 variable  f : α → β
 open function
 
-example : injective f ↔ left_inverse (inverse f) f  :=
-sorry
+#print left_inverse
+example : injective f ↔ left_inverse (inverse f) f  := begin
+  split,
+  {
+    intros h,
+    rw left_inverse,
+    intros x,
+    rw inverse,
+    dsimp,
+    rw dif_pos,
+    sorry,
+    sorry,
+  },
+  {
+    rw left_inverse,
+    intros h,
+    intros x y,
+    intros g,
+    let h':= h x,
+    rw g at h',
+    rw inverse at h',
+    simp at h',
+    sorry,
+  }
+end
 
 example : surjective f ↔ right_inverse (inverse f) f :=
 sorry
@@ -206,10 +395,17 @@ begin
     have : j ∉ f j,
       { by rwa h at h' },
     contradiction },
-  have h₂ : j ∈ S,
-    sorry,
-  have h₃ : j ∉ S,
-    sorry,
+  have h₂ : j ∈ S, {
+    rw h at h₁,
+    simp at h₁,
+    rw <-h,
+    apply h₁,
+  },
+  have h₃ : j ∉ S, {
+    contrapose! h₁,
+    rw h,
+    apply h₁,
+  },
   contradiction
 end
 
