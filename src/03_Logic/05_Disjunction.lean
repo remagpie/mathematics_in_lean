@@ -131,7 +131,7 @@ end
 
 example {z : ℝ} (h : ∃ x y, z = x^2 + y^2 ∨ z = x^2 + y^2 + 1) :
   z ≥ 0 := begin
-  rcases h with ⟨x, y, rfl | rfl⟩; sorry
+  rcases h with ⟨x, y, rfl | rfl⟩; repeat { apply add_nonneg }; repeat { use [sq_nonneg x] }; repeat { use [sq_nonneg y] }; linarith,
 end
 
 example {x : ℝ} (h : x^2 = 1) : x = 1 ∨ x = -1 := begin
