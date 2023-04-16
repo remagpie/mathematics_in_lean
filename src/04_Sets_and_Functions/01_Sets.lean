@@ -138,8 +138,20 @@ end
 example : s ∩ t = t ∩ s :=
 by apply subset.antisymm; simp [and.comm]
 
-example : s ∩ (s ∪ t) = s :=
-sorry
+example : s ∩ (s ∪ t) = s := begin
+ext x,
+split,
+{
+  rintros ⟨ xs, _ ⟩,
+  exact xs, 
+},
+{
+  intro xs,
+  split,
+  { exact xs, },
+  { left, exact xs, },
+}
+end
 
 example : s ∪ (s ∩ t) = s :=
 sorry
