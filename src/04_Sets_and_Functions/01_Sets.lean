@@ -14,12 +14,14 @@ begin
   rw subset_def at h,
   dsimp,
   rintros x ⟨xs, xu⟩,
-  exact ⟨h _ xs, xu⟩,
+  -- exact ⟨h _ xs, xu⟩,
+  exact ⟨h x xs, xu⟩,
 end
 
 example (h : s ⊆ t) : s ∩ u ⊆ t ∩ u :=
 begin
   simp only [subset_def, mem_inter_eq] at *,
+  -- ∀ (x : α), x ∈ s ∧ x ∈ u → x ∈ t ∧ x ∈ u
   rintros x ⟨xs, xu⟩,
   exact ⟨h _ xs, xu⟩,
 end
@@ -57,8 +59,23 @@ begin
   right, exact ⟨xs, xu⟩
 end
 
-example : (s ∩ t) ∪ (s ∩ u) ⊆ s ∩ (t ∪ u):=
-sorry
+-- 합집합을 rintros로 풀어내는 방법을 모르겠네
+example : (s ∩ t) ∪ (s ∩ u) ⊆ s ∩ (t ∪ u):= begin
+  -- rintros x,
+  rintros x z, -- z : x ∈ (s ∩ t) ∪ (s ∩ u)
+  rcases z with ⟨xs, xt⟩  | ⟨xs, xu⟩ ,
+  -- rintros x ⟨ ⟨xs, xt⟩  ⟩,
+  { show x ∈ s ∩ (t ∪ u), -- xs and xt
+    split,
+    {  exact xs, },
+    { left, exact xt, },
+  },
+  { show x ∈ s ∩ (t ∪ u), -- x ∈ s ∩ u
+    split,
+    { exact xs, },
+    { right, exact xu, },
+  },
+end
 
 example : s \ t \ u ⊆ s \ (t ∪ u) :=
 begin
@@ -81,8 +98,20 @@ begin
   rintros (xt | xu); contradiction
 end
 
-example : s \ (t ∪ u) ⊆ s \ t \ u :=
-sorry
+example : s \ (t ∪ u) ⊆ s \ t \ u := begin
+  rintros x ⟨ xs, x_notin_t_and_u⟩,
+  use xs,
+  { show x ∉ t,
+    by_contradiction xt,
+    apply x_notin_t_and_u,
+    left, exact xt,
+  },
+  { show x ∉ u,
+    by_contradiction xt,
+    apply x_notin_t_and_u,
+    right, exact xt,
+  },
+end
 
 example : s ∩ t = t ∩ s :=
 begin
@@ -107,7 +136,7 @@ begin
 end
 
 example : s ∩ t = t ∩ s :=
-subset.antisymm sorry sorry
+by apply subset.antisymm; simp [and.comm]
 
 example : s ∩ (s ∪ t) = s :=
 sorry
