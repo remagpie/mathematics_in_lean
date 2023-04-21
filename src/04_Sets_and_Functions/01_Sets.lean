@@ -153,14 +153,44 @@ split,
 }
 end
 
-example : s ∪ (s ∩ t) = s :=
-sorry
+example : s ∪ (s ∩ t) = s := begin
+  ext x,
+  split,
+  { rintros (xs | ⟨xs, _⟩); exact xs, },
+  { intro xs, left, exact xs, },
+end
 
-example : (s \ t) ∪ t = s ∪ t :=
-sorry
+example : (s \ t) ∪ t = s ∪ t := begin
+  ext x,
+  split,
+  { dsimp, rintros (⟨xs, nxt⟩ | xt),
+    { left, exact xs },
+    { right, exact xt },
+  },
+  { dsimp, rintros (xs | xt),
+    {  
+      cases classical.em (x ∈ t) with xt xnotint,
+      { right, exact xt, },
+      { left, exact ⟨ xs, xnotint ⟩ , },
+     },
+    { right, exact xt },
+  },
+end
 
-example : (s \ t) ∪ (t \ s) = (s ∪ t) \ (s ∩ t) :=
-sorry
+example : (s \ t) ∪ (t \ s) = (s ∪ t) \ (s ∩ t) := begin
+  ext x,
+  split; dsimp,
+  { rintros (⟨ xs, nxt ⟩  | ⟨ xt, nxs ⟩ ); push_neg,
+    { have l:  x ∈ s ∨ x ∈ t, exact or.inl xs,
+      have r: x ∈ s → x ∉ t, {
+        intro _, exact nxt,
+      },
+      exact ⟨ l, r ⟩,
+      },
+    { sorry, }
+  },
+  {},
+end
 
 
 def evens : set ℕ := {n | even n}
