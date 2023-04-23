@@ -187,9 +187,21 @@ example : (s \ t) ∪ (t \ s) = (s ∪ t) \ (s ∩ t) := begin
       },
       exact ⟨ l, r ⟩,
       },
-    { sorry, }
+    { 
+      have l: x ∈ s ∨ x ∈ t, exact or.inr xt,
+      have r: x ∈ s → x ∉ t, by contradiction,
+      exact ⟨l, r⟩,
+    }
   },
-  {},
+  { push_neg,
+    rintros ⟨(xs | xt), (xs_than_nxt)⟩, -- (nxs | nxt)⟩  ,
+    { left, exact ⟨xs, xs_than_nxt xs⟩, },
+    { --  x ∈ s ∧ x ∉ t ∨ x ∈ t ∧ x ∉ s
+      right,
+      contrapose! xs_than_nxt,
+      exact ⟨xs_than_nxt xt, xt⟩,
+    },
+  },
 end
 
 
@@ -210,8 +222,21 @@ h
 example (x : ℕ) : x ∈ (univ : set ℕ) :=
 trivial
 
-example : { n | nat.prime n } ∩ { n | n > 2} ⊆ { n | ¬ even n } :=
-sorry
+#check nat.prime.eq_two_or_odd -- p = 2 ∨ p % 2 = 1
+#check nat.even_iff  -- even n ↔ n % 2 = 0 
+
+example : { n | nat.prime n } ∩ { n | n > 2} ⊆ { n | ¬ even n } := begin
+  intro n,
+  simp,
+  intros prime_n gt_2,
+  have : n = 2 ∨ n % 2 = 1, exact nat.prime.eq_two_or_odd prime_n,
+  cases this with n_eq_2 n_mod_2,
+  { exfalso, linarith, },
+  { by_contradiction even_n,
+    have : n % 2 = 0, exact nat.even_iff.mp even_n,
+    linarith,
+   },
+end
 
 #print prime
 #print nat.prime
@@ -250,12 +275,19 @@ variable (ssubt : s ⊆ t)
 include ssubt
 
 example (h₀ : ∀ x ∈ t, ¬ even x) (h₁ : ∀ x ∈ t, prime x) :
-  ∀ x ∈ s, ¬ even x ∧ prime x :=
-sorry
+  ∀ x ∈ s, ¬ even x ∧ prime x := begin
+  intros x xs,
+  have xt: x ∈ t, exact ssubt xs,
+  exact ⟨ h₀ x xt, h₁ x xt ⟩,  
+end
 
 example (h : ∃ x ∈ s, ¬ even x ∧ prime x) :
-  ∃ x ∈ t, prime x :=
-sorry
+  ∃ x ∈ t, prime x := begin
+  rcases h with ⟨x, xs, _, prime_x⟩,
+  have xt: x ∈ t, exact ssubt xs,
+  use x,
+  exact ⟨xt, prime_x⟩,
+end
 
 end
 
@@ -297,8 +329,30 @@ end
 
 open_locale classical
 
-example : s ∪ (⋂ i, A i) = ⋂ i, (A i ∪ s) :=
-sorry
+example : s ∪ (⋂ i, A i) = ⋂ i, (A i ∪ s) := begin
+  ext x,
+  simp only [mem_union_eq, mem_Inter],
+  split,
+  { show (x ∈ s ∨ ∀ (i : I), x ∈ A i) → ∀ (i : I), x ∈ A i ∨ x ∈ s,
+    rintros (xs | alli_x_in_ai ) i,
+    { show x ∈ A i ∨ x ∈ s, right, exact xs },
+    { show x ∈ A i ∨ x ∈ s, left, exact alli_x_in_ai i },
+  },
+  { show  (∀ (i : I), x ∈ A i ∨ x ∈ s) → (x ∈ s ∨ ∀ (i : I), x ∈ A i),
+    intro h,
+    cases em (x ∈ s) with xs nxs,
+    { left, exact xs, },
+    { right,  intro i, 
+      have xai_or_xs : x ∈ A i ∨ x ∈ s, by apply h i,
+      have : x ∈ A i, begin
+        cases xai_or_xs with xai xs,
+        { exact xai },
+        { exfalso, exact nxs xs }
+      end,
+      exact this,
+    },
+  },
+end
 
 def primes : set ℕ := {x | nat.prime x}
 
@@ -316,8 +370,25 @@ begin
   apply nat.exists_prime_and_dvd
 end
 
-example : (⋃ p ∈ primes, {x | x ≤ p}) = univ :=
-sorry
+#check eq_univ_of_forall 
+-- {s : set α} : (∀ x, x ∈ s) → s = univ
+#check nat.exists_infinite_primes
+-- (n : ℕ) : ∃ p, n ≤ p ∧ prime p
+
+example : (⋃ p ∈ primes, {x | x ≤ p}) = univ := begin
+  ext,
+  simp only [mem_Union],
+  split,
+  { intro h,
+    rcases h with ⟨p, p_prime, x_le_p⟩,
+    simp at x_le_p,
+    -- dsimp at x_le_p,
+    -- rw ← eq_univ_of_forall,
+    -- use x_le_p,
+    -- simp at x_le_p,
+  },  
+  { sorry },
+end
 
 end
 
