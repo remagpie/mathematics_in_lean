@@ -79,22 +79,9 @@ begin
   intros n nge,
   rw <-mul_sub,
   rw abs_mul,
-  rw <-mul_one ε,
-  rw <-div_self (ne_of_gt acpos),
-  rw mul_div,
-  rw mul_comm ε,
-  let g' := h' n nge,
-  sorry,
-  -- rw mul_lt_mul_left acpos,
-
-  -- let ε_c := ε / |c|,
-  -- have ε_c_mul: ε = ε_c * |c|, {
-  --   rw ε_c,
-
-  -- }
-  -- rw ε_c,
-  -- apply lt_div_iff_mul_lt.mp g',
-  -- dsimp,
+  rw mul_comm,
+  apply (lt_div_iff acpos).mp,
+  exact (h' n nge),
 end
 
 theorem exists_abs_le_of_converges_to {s : ℕ → ℝ} {a : ℝ}
@@ -104,7 +91,15 @@ begin
   cases cs 1 zero_lt_one with N h,
   use [N, abs a + 1],
   intros n nge,
-  sorry,
+  have g: |s n| <= |s n - a| + |a|, calc
+    |s n| = |(s n - a) + a| : by ring
+    ... <= |s n - a| + |a| : by apply abs_add,
+  have g': |s n - a| + |a| < |a| + 1, {
+    nth_rewrite 1 add_comm,
+    apply (add_lt_add_iff_right (|a|)).mpr,
+    exact h n nge,
+  },
+  apply lt_of_le_of_lt g g',
 end
 
 lemma aux {s t : ℕ → ℝ} {a : ℝ}
@@ -118,7 +113,18 @@ begin
   have pos₀ : ε / B > 0,
     from div_pos εpos Bpos,
   cases ct _ pos₀ with N₁ h₁,
-  sorry
+  use max N₀ N₁,
+  intros n NNle,
+  rw sub_zero,
+  rw abs_mul,
+  rw <-div_mul_cancel ε (ne_of_gt Bpos),
+  rw mul_comm,
+  let sn_lt := h₀ n (max_le_iff.mp NNle).left,
+  let tn_lt := h₁ n (max_le_iff.mp NNle).right,
+  rw sub_zero at tn_lt,
+  apply mul_lt_mul'' tn_lt sn_lt,
+  apply abs_nonneg,
+  apply abs_nonneg,
 end
 
 theorem converges_to_mul {s t : ℕ → ℝ} {a b : ℝ}
@@ -139,20 +145,29 @@ theorem converges_to_unique {s : ℕ → ℝ} {a b : ℝ}
   a = b :=
 begin
   by_contradiction abne,
-  have : abs (a - b) > 0,
-  { sorry },
+  have : abs (a - b) > 0, {
+    refine abs_pos.mpr _, -- ???
+    -- apply abs_pos.mpr,
+    contrapose! abne,
+    linarith,
+  },
   let ε := abs (a - b) / 2,
   have εpos : ε > 0,
   { change abs (a - b) / 2 > 0, linarith },
   cases sa ε εpos with Na hNa,
   cases sb ε εpos with Nb hNb,
   let N := max Na Nb,
-  have absa : abs (s N - a) < ε,
-  { sorry },
-  have absb : abs (s N - b) < ε,
-  { sorry },
-  have : abs (a - b) < abs (a - b),
-  { sorry },
+  have absa : abs (s N - a) < ε, {
+    apply hNa N (le_max_left Na Nb),
+  },
+  have absb : abs (s N - b) < ε, {
+    apply hNb N (le_max_right Na Nb),
+  },
+  have : abs (a - b) < abs (a - b), calc
+    |a - b| = |(s N - b) - (s N - a)| : by ring
+    ...     <= |s N - b| + |s N - a|  : by apply abs_sub
+    ...     < ε + ε                   : by apply add_lt_add absb absa
+    ...     = |a - b|                 : add_halves (|a - b|),
   exact lt_irrefl _ this
 end
 
