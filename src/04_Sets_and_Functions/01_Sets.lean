@@ -379,15 +379,36 @@ example : (⋃ p ∈ primes, {x | x ≤ p}) = univ := begin
   ext,
   simp only [mem_Union],
   split,
-  { intro h,
-    rcases h with ⟨p, p_prime, x_le_p⟩,
-    simp at x_le_p,
+  { 
+    -- intro h,
+    -- rcases h with ⟨p, p_prime, x_le_p⟩,
+    -- rw ← eq_univ_of_forall,
+
+    -- use x_le_p,
+    simp,
+    -- simp at x_le_p,
+    -- intro y,
+    -- rcases nat.exists_infinite_primes y with ⟨p', y_le_p, p_prime⟩,
+    -- exact y_le_p,
+    -- sorry,
+    -- use ({x : ℕ | x ≤ p}),
+    -- 이게 아닌데,,,,
+    -- simp at x_le_p,
+
     -- dsimp at x_le_p,
     -- rw ← eq_univ_of_forall,
     -- use x_le_p,
+
+    -- dsimp at x_le_p,
+    -- simp,
     -- simp at x_le_p,
   },  
-  { sorry },
+  { show x ∈ univ → (∃ (i : ℕ) (i_1 : i ∈ primes), x ∈ {x : ℕ | x ≤ i}),
+    rintros x_univ,
+    simp,
+    rcases nat.exists_infinite_primes x with ⟨p, x_le_p, p_prime⟩,
+    use [p, p_prime, x_le_p],
+  },
 end
 
 end
