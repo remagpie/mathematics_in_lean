@@ -32,17 +32,51 @@ begin
   use [x, xs]
 end
 
-example : f '' s ⊆ v ↔ s ⊆ f ⁻¹' v :=
-sorry
+example : f '' s ⊆ v ↔ s ⊆ f ⁻¹' v := begin
+  split,
+  { show f '' s ⊆ v → s ⊆ f ⁻¹' v,
+    rintros h x xs,
+    have : f x ∈ f '' s, from ⟨x, xs, rfl⟩,
+    have : f x ∈ v, from h this,
+    use this
+  },
+  { show s ⊆ f ⁻¹' v → f '' s ⊆ v,
+    -- rintros s_ss_primg_v y y_mem_img_f_s,
+    rintros s_ss_primg_v y ⟨x, xs, rfl⟩,
+    have : x ∈  f ⁻¹' v, from s_ss_primg_v xs,
+    show f x ∈ v, from this, 
+  },
+end
 
-example (h : injective f) : f ⁻¹' (f '' s) ⊆ s :=
-sorry
+example (h : injective f) : f ⁻¹' (f '' s) ⊆ s := begin
+  intros x x_mem_primg_f_s,
+  have : f x ∈ f '' s, from x_mem_primg_f_s,
+  rcases this with ⟨y, y_mem_s, fxeqfy⟩,
+  have : y = x, from h fxeqfy,
+  rw ←this,
+  exact y_mem_s, 
+end
 
-example : f '' (f⁻¹' u) ⊆ u :=
-sorry
+example : f '' (f⁻¹' u) ⊆ u := begin
+  intros y h, -- ⟨aa, bb⟩  ,
+  rcases h with ⟨x, x_mem_primg_f_u, fxeqy⟩,
+  rw ←fxeqy,
+  exact x_mem_primg_f_u,
+end
 
-example (h : surjective f) : u ⊆ f '' (f⁻¹' u) :=
-sorry
+-- ∀ b, ∃ a, f a = b
+example (h : surjective f) : u ⊆ f '' (f⁻¹' u) := begin
+  rintros y y_mem_u,
+  let hj := f ⁻¹' u,
+
+  -- fail: intro, 
+  simp,
+  rcases h y with ⟨x, fxeqy⟩,
+  use x,
+  split,
+  { rw fxeqy, exact y_mem_u },
+  { exact fxeqy },
+end
 
 example (h : s ⊆ t) : f '' s ⊆ f '' t :=
 sorry
