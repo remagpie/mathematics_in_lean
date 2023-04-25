@@ -35,7 +35,20 @@ begin
   cases cs (ε / 2) ε2pos with Ns hs,
   cases ct (ε / 2) ε2pos with Nt ht,
   use max Ns Nt,
-  sorry
+  intros n NtNslen,
+  have ngeS : n ≥ Ns := le_of_max_le_left NtNslen,
+  have ngeT : n ≥ Nt := le_of_max_le_right NtNslen,
+  have h': abs (s n + t n - (a + b)) = abs ((s n - a) + (t n - b)) :=
+    begin
+      congr,
+      ring
+    end,
+  rw h',
+  apply lt_of_le_of_lt (abs_add _ _),
+  have h'' : ε = ε / 2 + ε / 2  :=
+    by linarith,
+  rw h'',
+  apply add_lt_add (hs n ngeS) (ht n ngeT)
 end
 
 theorem converges_to_mul_const {s : ℕ → ℝ} {a : ℝ}
@@ -48,7 +61,17 @@ begin
     rw [h, zero_mul] },
   have acpos : 0 < abs c,
     from abs_pos.mpr h,
-  sorry
+  intros ε εpos, dsimp,
+  have εpos' : 0 < ε / abs c,
+    from div_pos εpos acpos,
+  cases cs (ε / abs c) εpos' with N hN,
+  use N,
+  intros n Ngen,
+  have h' : abs (c * s n - c * a) = abs (c * (s n - a)),
+    by { congr, ring },
+  rw h', rw abs_mul,
+  -- ?? Library search 결과
+  exact (lt_div_iff' acpos).mp (hN n Ngen),
 end
 
 theorem exists_abs_le_of_converges_to {s : ℕ → ℝ} {a : ℝ}
@@ -57,7 +80,20 @@ theorem exists_abs_le_of_converges_to {s : ℕ → ℝ} {a : ℝ}
 begin
   cases cs 1 zero_lt_one with N h,
   use [N, abs a + 1],
-  sorry
+  intros n Ngen,
+  have h' : abs (s n - a) < 1,
+    from h n Ngen,
+  have h'' : abs (s n) < abs a + 1 :=
+    calc
+      abs (s n) = abs (s n - a + a)       
+        : by rw sub_add_cancel
+      ... ≤ abs (s n - a) + abs a   
+        : by exact abs_add (s n - a) a
+      ... < 1 + abs a              
+        : by linarith
+      ... = abs a + 1              
+        : by ring,
+  exact h'',
 end
 
 lemma aux {s t : ℕ → ℝ} {a : ℝ}
@@ -71,7 +107,24 @@ begin
   have pos₀ : ε / B > 0,
     from div_pos εpos Bpos,
   cases ct _ pos₀ with N₁ h₁,
-  sorry
+  use max N₀ N₁,
+  intros n N0N1en,
+  have nge₀ : n ≥ N₀ := le_of_max_le_left N0N1en,
+  have nge₁ : n ≥ N₁ := le_of_max_le_right N0N1en,
+  have h' : abs (s n * t n - 0) = abs (s n) * abs (t n - 0) :=
+    begin
+      rw sub_zero, 
+      rw abs_mul,
+      rw sub_zero
+    end,
+  rw h',
+  have h'' : ε = B * (ε / B) :=
+    begin
+      rw mul_div_cancel',
+      exact ne_of_gt Bpos
+    end,
+  rw h'',
+  apply mul_lt_mul'' (h₀ n nge₀) (h₁ n nge₁) (abs_nonneg _) (abs_nonneg _)  
 end
 
 theorem converges_to_mul {s t : ℕ → ℝ} {a b : ℝ}
@@ -87,13 +140,20 @@ begin
   ring
 end
 
+-- 어렵다...
 theorem converges_to_unique {s : ℕ → ℝ} {a b : ℝ}
     (sa : converges_to s a) (sb : converges_to s b) :
   a = b :=
 begin
   by_contradiction abne,
-  have : abs (a - b) > 0,
-  { sorry },
+  have : abs (a - b) > 0 :=
+  begin
+    apply lt_of_le_of_ne,
+    apply abs_nonneg,
+    intro h,
+    apply abne,
+    apply eq_of_abs_sub_eq_zero h.symm,
+  end,
   let ε := abs (a - b) / 2,
   have εpos : ε > 0,
   { change abs (a - b) / 2 > 0, linarith },
@@ -101,13 +161,23 @@ begin
   cases sb ε εpos with Nb hNb,
   let N := max Na Nb,
   have absa : abs (s N - a) < ε,
-  { sorry },
+  { apply hNa, apply le_max_left },
   have absb : abs (s N - b) < ε,
-  { sorry },
+  { apply hNb, apply le_max_right },
   have : abs (a - b) < abs (a - b),
-  { sorry },
-  exact lt_irrefl _ this
+  {
+    have h': abs (a - b) = abs (- (s N - a) + (s N - b)),
+      { congr, ring },
+    rw h',
+    apply lt_of_le_of_lt,
+    apply abs_add,
+    rw abs_neg,
+    sorry
+  },
+  exact lt_irrefl _ this,
 end
+
+
 
 section
 variables {α : Type*} [linear_order α]
@@ -116,4 +186,3 @@ def converges_to' (s : α → ℝ) (a : ℝ) :=
 ∀ ε > 0, ∃ N, ∀ n ≥ N, abs (s n - a) < ε
 
 end
-
