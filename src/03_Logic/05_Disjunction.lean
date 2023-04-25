@@ -138,13 +138,13 @@ example {x y : ℝ} (h : x^2 = y^2) : x = y ∨ x = -y :=
 begin
   have h' : x^2 - y^2 = 0,
   { rw h, rw sub_self },
-  have h' : (x - y) * (x + y) = 0,
-  { rw [←sub_mul, h, sub_self] },
-  cases eq_zero_or_eq_zero_of_mul_eq_zero h' with h1 h1,
+  have h'' : (x - y) * (x + y) = 0,
+  { rw ← h', ring },
+  cases eq_zero_or_eq_zero_of_mul_eq_zero h'' with h1 h2,
   { left,
     exact eq_of_sub_eq_zero h1 },
   { right,
-    exact eq_neg_of_add_eq_zero h1 }
+    exact eq_neg_iff_add_eq_zero.mpr h2 }
 end
 
 section
@@ -152,10 +152,31 @@ variables {R : Type*} [comm_ring R] [is_domain R]
 variables (x y : R)
 
 example (h : x^2 = 1) : x = 1 ∨ x = -1 :=
-sorry
+begin
+  have h' : x^2 - 1 = 0,
+  { rw h, rw sub_self },
+  have h'' : (x - 1) * (x + 1) = 0,
+   { rw ← h',
+    ring },
+  cases eq_zero_or_eq_zero_of_mul_eq_zero h'' with h1 h1,
+  { left,
+    exact eq_of_sub_eq_zero h1 },
+  { right,
+    exact eq_neg_iff_add_eq_zero.mpr h1 }
+end
 
 example (h : x^2 = y^2) : x = y ∨ x = -y :=
-sorry
+begin
+  have h' : x^2 - y^2 = 0,
+  { rw h, rw sub_self },
+  have h'' : (x - y) * (x + y) = 0,
+  { rw ← h', ring },
+  cases eq_zero_or_eq_zero_of_mul_eq_zero h'' with h1 h2,
+  { left,
+    exact eq_of_sub_eq_zero h1 },
+  { right,
+    exact eq_neg_iff_add_eq_zero.mpr h2 }
+end
 
 end
 
@@ -179,6 +200,21 @@ begin
 end
 
 example (P Q : Prop) : (P → Q) ↔ ¬ P ∨ Q :=
-sorry
+begin
+  split,
+  { intro h,
+    by_cases h' : P,
+    { right, 
+      exact h h' 
+    },
+    { left, 
+      assumption 
+    }
+  },
+  { rintros (h | h) h',
+    { contradiction },
+    { assumption }
+  }
+end
 
 end
