@@ -78,14 +78,40 @@ example (h : surjective f) : u ⊆ f '' (f⁻¹' u) := begin
   { exact fxeqy },
 end
 
-example (h : s ⊆ t) : f '' s ⊆ f '' t :=
-sorry
+example (h : s ⊆ t) : f '' s ⊆ f '' t := begin
+  rintros y ⟨x, xs, f_x_eq_y⟩,
+  have : x ∈ t, exact h xs,
+  use ⟨ x, this, f_x_eq_y⟩ ,
+end
 
-example (h : u ⊆ v) : f ⁻¹' u ⊆ f ⁻¹' v :=
-sorry
+example (h : u ⊆ v) : f ⁻¹' u ⊆ f ⁻¹' v := begin
+  rintros x x_mem_f_preimg_u,
+  -- have : f x ∈ u, by x_mem_f_preing_u,
+  have : f x ∈ u, exact mem_preimage.mp x_mem_f_preimg_u,
+  have : f x ∈ v, exact h this,
+  use this,
+end
 
-example : f ⁻¹' (u ∪ v) = f ⁻¹' u ∪ f ⁻¹' v :=
-sorry
+example : f ⁻¹' (u ∪ v) = f ⁻¹' u ∪ f ⁻¹' v := begin
+  ext,
+  split,
+  { show x ∈ f ⁻¹' (u ∪ v) → x ∈ f ⁻¹' u ∪ f ⁻¹' v,
+    rintros x_mem_pre_img_u_or_v,
+    simp,
+    have : f x ∈ (u ∪ v), exact mem_preimage.mp x_mem_pre_img_u_or_v,
+    -- rcases mem_or_mem_of_mem_union this with ⟨ z, zz ⟩ ,
+    -- {},
+    -- {},
+
+        sorry },
+  { 
+    sorry },
+  -- let h := f ⁻¹' (u ∪ v),
+  -- have : ∃ x, f x ∈ (u ∪ v), sorry,
+
+  -- have :  f ⁻¹' (u ∪ v) = 
+-- sorry
+end
 
 example : f '' (s ∩ t) ⊆ f '' s ∩ f '' t :=
 sorry
