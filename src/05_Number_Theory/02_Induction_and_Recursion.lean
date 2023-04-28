@@ -41,7 +41,29 @@ theorem pow_two_le_fac (n : ℕ) : 2^(n-1) ≤ fac n :=
 begin
   cases n with n,
   { simp [fac] },
-  sorry
+  induction n with n ih,
+  { ring },
+  rw fac,
+  rw nat.succ_sub_one,
+  rw <-(pow_mul_pow_sub),
+  show n.succ - 1 <= n.succ, {
+    rw nat.succ_sub_one,
+    apply nat.le_succ,
+  },
+  rw nat.succ_sub_one,
+  rw nat.succ_sub,
+  show n <= n, { linarith },
+  rw nat.sub_self,
+  rw pow_one,
+  nth_rewrite 1 mul_comm,
+  apply mul_le_mul,
+  { apply ih },
+  {
+    repeat { rw nat.succ_le_succ_iff },
+    apply nat.zero_le,
+  },
+  apply nat.zero_le,
+  apply nat.zero_le,
 end
 
 section
@@ -92,8 +114,16 @@ begin
   ring
 end
 
-theorem sum_sqr (n : ℕ) : ∑ i in range (n + 1), i^2 = n * (n + 1) * (2 *n + 1) / 6 :=
-sorry
+theorem sum_sqr (n : ℕ) : ∑ i in range (n + 1), i^2 = n * (n + 1) * (2 *n + 1) / 6 := begin
+  symmetry, apply nat.div_eq_of_eq_mul_right (by norm_num : 0 < 6),
+  induction n with n ih,
+  { simp },
+  rw finset.sum_range_succ,
+  rw mul_add 6,
+  rw <-ih,
+  rw nat.succ_eq_add_one,
+  ring,
+end
 
 end
 
@@ -133,17 +163,44 @@ begin
   rw [add, succ_add, ih]
 end
 
-theorem add_assoc (m n k : my_nat) : add (add m n) k = add m (add n k) :=
-sorry
+theorem add_assoc (m n k : my_nat) : add (add m n) k = add m (add n k) := begin
+  induction k with k ih,
+  {
+    repeat {
+      rw add_comm _ zero,
+      rw zero_add,
+    },
+  },
+  repeat { rw add },
+  congr,
+  assumption,
+end
 
-theorem mul_add  (m n k : my_nat) : mul m (add n k) = add (mul m n) (mul m k) :=
-sorry
+theorem mul_add  (m n k : my_nat) : mul m (add n k) = add (mul m n) (mul m k) := begin
+  induction k with k ih,
+  {rw add, rw mul, rw add},
+  rw add,
+  rw mul,
+  rw mul,
+  rw <-add_assoc,
+  congr,
+  assumption,
+end
 
-theorem zero_mul (n : my_nat) : mul zero n = zero :=
-sorry
+theorem zero_mul (n : my_nat) : mul zero n = zero := begin
+  induction n with n ih,
+  { rw mul },
+  rw mul,
+  rw add,
+  apply ih,
+end
 
-theorem succ_mul (m n : my_nat) : mul (succ m) n = add (mul m n) n :=
-sorry
+theorem succ_mul (m n : my_nat) : mul (succ m) n = add (mul m n) n := begin
+  induction n with n ih,
+  {rw add, rw mul, rw mul},
+  rw mul,
+  rw mul,
+end
 
 theorem mul_comm (m n : my_nat) : mul m n = mul n m :=
 sorry
