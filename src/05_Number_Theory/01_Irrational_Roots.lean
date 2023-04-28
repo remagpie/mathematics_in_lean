@@ -50,24 +50,74 @@ end
 example {m n : ℕ} (coprime_mn : m.coprime n) : m^2 ≠ 2 * n^2 :=
 begin
   intro sqr_eq,
-  have : 2 ∣ m,
-    sorry,
+  have : 2 ∣ m, {
+    apply even_of_even_sqr,
+    rw sqr_eq,
+    norm_num,
+  },
   obtain ⟨k, meq⟩ := dvd_iff_exists_eq_mul_left.mp this,
   have : 2 * (2 * k^2) = 2 * n^2,
   { rw [←sqr_eq, meq], ring },
-  have : 2 * k^2 = n^2,
-    sorry,
-  have : 2 ∣ n,
-    sorry,
-  have : 2 ∣ m.gcd n,
-    sorry,
-  have : 2 ∣ 1,
-    sorry,
+  have : 2 * k^2 = n^2, {
+    cases mul_eq_mul_left_iff.mp this with h h,
+    { apply h },
+    contrapose! h,
+    linarith,
+  },
+  have : 2 ∣ n, {
+    apply even_of_even_sqr,
+    rw <-this,
+    norm_num,
+  },
+  have : 2 ∣ m.gcd n, by apply nat.dvd_gcd; assumption,
+  have : 2 ∣ 1, {
+    rw nat.coprime at coprime_mn,
+    rw coprime_mn at this,
+    apply this,
+  },
   norm_num at this
 end
 
-example {m n p : ℕ} (coprime_mn : m.coprime n) (prime_p : p.prime) : m^2 ≠ p * n^2 :=
-    sorry
+lemma dvd_of_dvd_sqr {m : ℕ} {n : ℕ} (p: nat.prime n) (h : n ∣ m^2) : n ∣ m :=
+begin
+  rw pow_two at h,
+  rw nat.prime.dvd_mul at h,
+  cases h; apply h,
+  exact p,
+end
+
+example {m n p : ℕ} (coprime_mn : m.coprime n) (prime_p : p.prime) : m^2 ≠ p * n^2 := begin
+  intro sqr_eq,
+  have : p ∣ m, {
+    apply dvd_of_dvd_sqr prime_p,
+    rw sqr_eq,
+    norm_num,
+  },
+  obtain ⟨k, meq⟩ := dvd_iff_exists_eq_mul_left.mp this,
+  have : p * (p * k^2) = p * n^2,
+  { rw [←sqr_eq, meq], ring },
+  have : p * k^2 = n^2, {
+    cases mul_eq_mul_left_iff.mp this with h h,
+    { apply h },
+    contrapose! h,
+    let g := nat.prime.two_le prime_p,
+    linarith,
+  },
+  have : p ∣ n, {
+    apply dvd_of_dvd_sqr prime_p,
+    rw <-this,
+    norm_num,
+  },
+  have : p ∣ m.gcd n, by apply nat.dvd_gcd; assumption,
+  have : p ∣ 1, {
+    rw nat.coprime at coprime_mn,
+    rw coprime_mn at this,
+    apply this,
+  },
+  let h := nat.le_of_dvd zero_lt_one this,
+  let g := nat.prime.two_le prime_p,
+  linarith,
+end
 
 #check nat.factors
 #check nat.prime_of_mem_factors
@@ -94,9 +144,14 @@ begin
   have nsqr_nez : n^2 ≠ 0,
     by simpa,
   have eq1 : nat.factorization (m^2) p = 2 * m.factorization p,
-    sorry,
-  have eq2 : (p * n^2).factorization p = 2 * n.factorization p + 1,
-    sorry,
+    by exact factorization_pow' m 2 p,
+  have eq2 : (p * n^2).factorization p = 2 * n.factorization p + 1, {
+    let h := factorization_mul' (nat.prime.ne_zero prime_p) nsqr_nez,
+    rw h,
+    rw factorization_pow' n 2 p,
+    rw nat.prime.factorization' prime_p,
+    linarith,
+  },
   have : (2 * m.factorization p) % 2 = (2 * n.factorization p + 1) % 2,
   { rw [←eq1, sqr_eq, eq2] },
   rw [add_comm, nat.add_mul_mod_self_left, nat.mul_mod_right] at this,
@@ -110,14 +165,18 @@ begin
   { simp },
   have npow_nz : n^k ≠ 0 := λ npowz, nnz (pow_eq_zero npowz),
   have eq1 : (m^k).factorization p = k * m.factorization p,
-    sorry,
+    by exact factorization_pow' m k p,
   have eq2 : (r.succ * n^k).factorization p =
-      k * n.factorization p + r.succ.factorization p,
-    sorry,
+      k * n.factorization p + r.succ.factorization p, {
+    let h := factorization_mul' (nat.succ_ne_zero r) npow_nz,
+    rw h,
+    rw factorization_pow' n k p,
+    rw add_comm,
+  },
   have : r.succ.factorization p = k * m.factorization p - k * n.factorization p,
   { rw [←eq1, pow_eq, eq2, add_comm, nat.add_sub_cancel] },
   rw this,
-  sorry
+  apply nat.dvd_sub'; apply dvd_mul_right,
 end
 
 #check multiplicity
