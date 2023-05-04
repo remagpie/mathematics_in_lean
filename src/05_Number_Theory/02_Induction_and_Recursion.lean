@@ -200,9 +200,22 @@ theorem succ_mul (m n : my_nat) : mul (succ m) n = add (mul m n) n := begin
   {rw add, rw mul, rw mul},
   rw mul,
   rw mul,
+  rw add_assoc,
+  nth_rewrite 2 add_comm,
+  rw succ_add,
+  rw add_comm n m,
+  rw <-succ_add,
+  nth_rewrite 2 add_comm,
+  rw <-add_assoc,
+  rw ih,
 end
 
-theorem mul_comm (m n : my_nat) : mul m n = mul n m :=
-sorry
+theorem mul_comm (m n : my_nat) : mul m n = mul n m := begin
+  induction n with n ih,
+  {rw zero_mul, rw mul},
+  rw mul,
+  rw succ_mul,
+  rw ih,
+end
 
 end my_nat
