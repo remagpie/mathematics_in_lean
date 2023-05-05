@@ -92,6 +92,8 @@ example (h : u ⊆ v) : f ⁻¹' u ⊆ f ⁻¹' v := begin
   use this,
 end
 
+#check union_def
+
 example : f ⁻¹' (u ∪ v) = f ⁻¹' u ∪ f ⁻¹' v := begin
   ext,
   split,
@@ -99,22 +101,29 @@ example : f ⁻¹' (u ∪ v) = f ⁻¹' u ∪ f ⁻¹' v := begin
     rintros x_mem_pre_img_u_or_v,
     simp,
     have : f x ∈ (u ∪ v), exact mem_preimage.mp x_mem_pre_img_u_or_v,
-    -- rcases mem_or_mem_of_mem_union this with ⟨ z, zz ⟩ ,
-    -- {},
-    -- {},
-
-        sorry },
-  { 
-    sorry },
-  -- let h := f ⁻¹' (u ∪ v),
-  -- have : ∃ x, f x ∈ (u ∪ v), sorry,
-
-  -- have :  f ⁻¹' (u ∪ v) = 
--- sorry
+    rw union_def at this,
+    simp at this,
+    exact this,
+  },
+  { show x ∈ f ⁻¹' u ∪ f ⁻¹' v → x ∈ f ⁻¹' (u ∪ v),
+    rintros (x_mem_f_preimg_u | x_mem_f_preimg_v),
+    { simp,
+      simp at x_mem_f_preimg_u,
+      left,
+      exact x_mem_f_preimg_u,
+    },
+    { show x ∈ f ⁻¹' (u ∪ v),
+      simp at *,
+      right,
+      exact x_mem_f_preimg_v,
+    },
+  },
 end
 
-example : f '' (s ∩ t) ⊆ f '' s ∩ f '' t :=
-sorry
+example : f '' (s ∩ t) ⊆ f '' s ∩ f '' t := begin
+  
+  sorry
+end
 
 example (h : injective f) : f '' s ∩ f '' t ⊆ f '' (s ∩ t) :=
 sorry
