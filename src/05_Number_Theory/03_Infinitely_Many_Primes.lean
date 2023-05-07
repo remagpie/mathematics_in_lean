@@ -320,14 +320,32 @@ begin
   have pne3 : p ≠ 3, {
     by_contradiction peq3,
     rw peq3 at pdvd,
+    rw nat.dvd_add_self_right at pdvd,
+    rw (nat.prime.dvd_mul nat.prime_three) at pdvd,
+    norm_num at pdvd,
+    let g := mem_of_dvd_prod_primes nat.prime_three _ pdvd,
+    show ∀ (n : ℕ), n ∈ s.erase 3 → nat.prime n, {
+      intros nn nn_s3,
+      let nn_s := mem_of_mem_erase nn_s3,
+      let hs' := (hs nn).mpr nn_s,
+      apply hs'.left,
+    },
+    simp at g,
+    apply g,
   },
-  have : p ∣ 4 * (∏ i in erase s 3, i),
-    sorry,
-  have : p ∣ 3,
-    sorry,
-  have : p = 3,
-    sorry,
+  have : p ∣ 4 * (∏ i in erase s 3, i), {
+    apply (nat.prime.dvd_mul pp).mpr,
+    right,
+    apply dvd_prod_of_mem,
+    apply mem_erase_of_ne_of_mem pne3 ps,
+  },
+  have : p ∣ 3, {
+    let g := nat.dvd_sub' pdvd this,
+    norm_num at g,
+    apply g,
+  },
+  have : p = 3, {
+    exact (nat.prime_dvd_prime_iff_eq pp nat.prime_three).mp this,
+  },
   contradiction
 end
-
-
