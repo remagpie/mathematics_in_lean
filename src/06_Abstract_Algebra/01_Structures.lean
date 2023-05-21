@@ -98,15 +98,30 @@ example : ∀ a b : point, add a b = add b a :=
 λ ⟨xa, ya, za⟩ ⟨xb, yb, zb⟩, by simp [add, add_comm]
 
 protected theorem add_assoc (a b c : point) :
-  (a.add b).add c = a.add (b.add c) :=
-sorry
+  (a.add b).add c = a.add (b.add c) := begin
+  rcases a with ⟨xa, ya, za⟩,
+  rcases b with ⟨xb, yb, zb⟩,
+  rcases c with ⟨xc, yc, zc⟩,
+  repeat { rw add },
+  ext; repeat {
+    dsimp,
+    rw add_assoc,
+  },
+end
 
-def smul (r : ℝ) (a : point) : point :=
-sorry
+def smul (r : ℝ) (a : point) : point := ⟨r * a.x, r * a.y, r * a.z⟩
 
 theorem smul_distrib (r : ℝ) (a b : point) :
-  (smul r a).add (smul r b) = smul r (a.add b) :=
-sorry
+  (smul r a).add (smul r b) = smul r (a.add b) := begin
+  rcases a with ⟨xa, ya, za⟩,
+  rcases b with ⟨xb, yb, zb⟩,
+  repeat { rw smul },
+  repeat { rw add },
+  ext; {
+    dsimp,
+    rw mul_add,
+  },
+end
 
 end point
 
@@ -145,7 +160,36 @@ def weighted_average (lambda : real)
     (lambda_nonneg : 0 ≤ lambda) (lambda_le : lambda ≤ 1)
     (a b : standard_two_simplex) :
   standard_two_simplex :=
-sorry
+{ x        := a.x * lambda + b.x * (1 - lambda),
+  y        := a.y * lambda + b.y * (1 - lambda),
+  z        := a.z * lambda + b.z * (1 - lambda),
+  x_nonneg := add_nonneg (mul_nonneg a.x_nonneg lambda_nonneg) (mul_nonneg b.x_nonneg (by linarith)),
+  y_nonneg := add_nonneg (mul_nonneg a.y_nonneg lambda_nonneg) (mul_nonneg b.y_nonneg (by linarith)),
+  z_nonneg := add_nonneg (mul_nonneg a.z_nonneg lambda_nonneg) (mul_nonneg b.z_nonneg (by linarith)),
+  sum_eq   := by {
+    rw <-add_assoc,
+    nth_rewrite 1 add_comm,
+    nth_rewrite 2 add_comm,
+    nth_rewrite 1 add_assoc,
+    nth_rewrite 3 add_comm,
+    rw <-add_assoc,
+    rw <-add_assoc,
+    rw <-add_assoc,
+    rw <-add_mul,
+    rw <-add_mul,
+    rw add_assoc,
+    rw <-add_mul,
+    rw add_assoc,
+    rw <-add_mul,
+    rw <-add_assoc,
+    nth_rewrite 1 add_comm,
+    nth_rewrite 2 add_comm,
+    rw <-add_assoc,
+    rw a.sum_eq,
+    rw b.sum_eq,
+    linarith,
+  }
+}
 
 end standard_two_simplex
 
@@ -173,6 +217,25 @@ def midpoint (n : ℕ) (a b : standard_simplex n) : standard_simplex n :=
         a.sum_eq_one, b.sum_eq_one],
       field_simp
     end  }
+
+def weighted_average (n : ℕ) (lambda : real)
+    (lambda_nonneg : 0 ≤ lambda) (lambda_le : lambda ≤ 1)
+    (a b : standard_simplex n) :
+    standard_simplex n :=
+{
+  v          := λ i, (a.v i) * lambda + (b.v i) * (1 - lambda),
+  nonneg     := by {
+    intro i,
+    apply add_nonneg; apply mul_nonneg,
+    exact a.nonneg i,
+    exact lambda_nonneg,
+    exact b.nonneg i,
+    linarith,
+  },
+  sum_eq_one := by {
+    simp [finset.sum_add_distrib, <-finset.sum_mul, a.sum_eq_one, b.sum_eq_one],
+  },
+}
 
 end standard_simplex
 
@@ -224,5 +287,3 @@ variable s : std_simplex
 #check s.2
 
 end
-
-
