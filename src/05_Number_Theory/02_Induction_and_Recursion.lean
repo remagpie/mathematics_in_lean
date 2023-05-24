@@ -41,7 +41,17 @@ theorem pow_two_le_fac (n : ℕ) : 2^(n-1) ≤ fac n :=
 begin
   cases n with n,
   { simp [fac] },
-  sorry
+  induction n with n ih,
+  { simp [fac] },
+  rw nat.succ_eq_add_one,
+  rw nat.succ_eq_add_one at ih,
+  rw nat.succ_eq_add_one,
+  simp at *,
+  ring_nf,
+  rw pow_succ,
+  rw fac,
+  simp, ring_nf,
+  
 end
 
 section
@@ -93,7 +103,14 @@ begin
 end
 
 theorem sum_sqr (n : ℕ) : ∑ i in range (n + 1), i^2 = n * (n + 1) * (2 *n + 1) / 6 :=
-sorry
+begin
+  symmetry, 
+  apply nat.div_eq_of_eq_mul_right (by norm_num : 0 < 6),
+  induction n with n ih,
+  { simp },
+  rw [finset.sum_range_succ, mul_add 6, ←ih, nat.succ_eq_add_one],
+  ring
+end
 
 end
 
@@ -134,18 +151,57 @@ begin
 end
 
 theorem add_assoc (m n k : my_nat) : add (add m n) k = add m (add n k) :=
-sorry
+begin
+  induction k with k ih,
+  { refl },
+  rw add, 
+  rw add, 
+  rw add, 
+  rw ih,
+end
 
 theorem mul_add  (m n k : my_nat) : mul m (add n k) = add (mul m n) (mul m k) :=
-sorry
+begin
+  induction k with k ih,
+  { refl },
+  rw add, 
+  rw mul, 
+  rw mul,
+  rw ih,
+  rw add_assoc
+end
 
 theorem zero_mul (n : my_nat) : mul zero n = zero :=
-sorry
+begin
+  induction n with n ih,
+  { refl },
+  rw mul, 
+  rw ih,
+  rw zero_add
+end
 
 theorem succ_mul (m n : my_nat) : mul (succ m) n = add (mul m n) n :=
-sorry
+begin
+  induction n with n ih,
+  { refl },
+  rw mul, 
+  rw mul, 
+  rw ih,
+  rw add_assoc,
+  rw add_assoc,
+  rw add_comm n,
+  rw succ_add,
+  refl,
+end
 
 theorem mul_comm (m n : my_nat) : mul m n = mul n m :=
-sorry
+begin
+  induction n with n ih,
+  rw zero_mul,
+  { refl },
+  rw mul, 
+  rw succ_mul, 
+  rw ih,
+end
 
 end my_nat
