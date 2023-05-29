@@ -90,24 +90,50 @@ by linarith [div'_add_mod' a b]
 end int
 
 theorem sq_add_sq_eq_zero {α : Type*} [linear_ordered_ring α] (x y : α) :
-  x^2 + y^2 = 0 ↔ x = 0 ∧ y = 0 :=
-  sorry
+  x^2 + y^2 = 0 ↔ x = 0 ∧ y = 0 := by {
+  split,
+  {
+    intro h,
+    split,
+    {
+      let g := add_eq_zero_iff' (sq_nonneg x) (sq_nonneg y),
+      apply pow_eq_zero,
+      apply (g.mp h).left,
+    },
+    let g := add_eq_zero_iff' (sq_nonneg x) (sq_nonneg y),
+    apply pow_eq_zero,
+    apply (g.mp h).right,
+  },
+  rintros ⟨xzero, yzero⟩,
+  rw xzero,
+  rw yzero,
+  rw zero_pow two_pos,
+  rw add_zero,
+}
 
 namespace gaussint
 
 def norm (x : gaussint) := x.re^2 + x.im^2
 
 @[simp] theorem norm_nonneg (x : gaussint) : 0 ≤ norm x :=
-sorry
+  add_nonneg (sq_nonneg x.re) (sq_nonneg x.im)
 
-theorem norm_eq_zero (x : gaussint) : norm x = 0 ↔ x = 0 :=
-sorry
+theorem norm_eq_zero (x : gaussint) : norm x = 0 ↔ x = 0 := by {
+  rw norm,
+  rw sq_add_sq_eq_zero,
+  rw gaussint.ext_iff,
+  refl,
+}
 
 theorem norm_pos (x : gaussint) : 0 < norm x ↔ x ≠ 0 :=
 sorry
 
-theorem norm_mul (x y : gaussint) : norm (x * y) = norm x * norm y :=
-sorry
+theorem norm_mul (x y : gaussint) : norm (x * y) = norm x * norm y := by {
+  repeat { rw norm },
+  rw mul_re,
+  rw mul_im,
+  linarith,
+}
 
 def conj (x : gaussint) : gaussint := ⟨x.re, -x.im⟩
 
@@ -191,4 +217,3 @@ example (x : gaussint) : irreducible x ↔ prime x :=
 principal_ideal_ring.irreducible_iff_prime
 
 end gaussint
-
