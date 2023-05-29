@@ -98,15 +98,18 @@ example : ∀ a b : point, add a b = add b a :=
 λ ⟨xa, ya, za⟩ ⟨xb, yb, zb⟩, by simp [add, add_comm]
 
 protected theorem add_assoc (a b c : point) :
-  (a.add b).add c = a.add (b.add c) :=
-sorry
+  (a.add b).add c = a.add (b.add c) := begin
+  ext; apply add_assoc,
+end
 
-def smul (r : ℝ) (a : point) : point :=
-sorry
+def smul (r : ℝ) (a : point) : point := begin
+  exact ⟨ r * a.x, r * a.y, r * a.z ⟩
+end
 
 theorem smul_distrib (r : ℝ) (a b : point) :
-  (smul r a).add (smul r b) = smul r (a.add b) :=
-sorry
+  (smul r a).add (smul r b) = smul r (a.add b) := begin
+  ext; simp [smul, add, mul_add],
+end
 
 end point
 
