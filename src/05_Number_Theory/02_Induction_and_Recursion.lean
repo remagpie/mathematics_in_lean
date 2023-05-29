@@ -20,10 +20,10 @@ example (n : ℕ) : fac (n + 1) = (n + 1) * fac n := by simp [fac]
 
 theorem fac_pos (n : ℕ) : 0 < fac n :=
 begin
-  induction n with n ih,
+  induction n with m ih,
   { rw fac, exact zero_lt_one },
   rw fac,
-  exact mul_pos n.succ_pos ih,
+  exact mul_pos m.succ_pos ih,
 end
 
 theorem dvd_fac {i n : ℕ} (ipos : 0 < i) (ile : i ≤ n) : i ∣ fac n :=
@@ -41,7 +41,40 @@ theorem pow_two_le_fac (n : ℕ) : 2^(n-1) ≤ fac n :=
 begin
   cases n with n,
   { simp [fac] },
-  sorry
+  induction n with n ih,
+  { rw fac, rw fac, norm_num, },
+  { rw fac,
+    -- ih: 2 ^ (n.succ - 1) ≤ fac n.succ
+    have ih'₀: 2 * 2 ^ (n.succ - 1) ≤ 2 * fac n.succ, {
+      exact mul_le_mul_left' ih 2,
+    },
+    have ih'₁: 2 ^ (n.succ - 1 + 1) ≤ 2 * fac n.succ, {
+      have : 2 * 2 ^ (n.succ - 1) = 2 ^ (n.succ - 1 + 1), {
+        rw add_comm,
+        rw pow_add,
+        by norm_num,
+      },
+      rw ← this,
+      exact ih'₀,
+    },
+    have ih': 2 ^ (n.succ.succ - 1) ≤ 2 * fac n.succ, {
+      have : n.succ - 1 + 1 = n.succ.succ - 1, {
+        by norm_num,
+      },
+      rw this at ih'₁,
+      exact ih'₁,
+    },
+    have ih'': 2 * fac n.succ ≤ (n.succ + 1) * fac n.succ, {
+      have : 2 ≤ n.succ + 1, {
+        have : 1 ≤ n.succ, {
+          exact nat.succ_pos n,
+        },
+        exact nat.succ_le_succ this,
+      },
+      exact mul_le_mul_right' this (fac n.succ),
+    },
+    apply le_trans ih' ih'',
+  },
 end
 
 section
@@ -85,15 +118,44 @@ by simp [mul_assoc, mul_comm, mul_left_comm]
 
 theorem sum_id (n : ℕ) : ∑ i in range (n + 1), i = n * (n + 1) / 2 :=
 begin
-  symmetry, apply nat.div_eq_of_eq_mul_right (by norm_num : 0 < 2),
+-- ∑ (i : ℕ) in range (n + 1), i = n * (n + 1) / 2
+  symmetry,
+  -- n * (n + 1) / 2 = ∑ (i : ℕ) in range (n + 1), i
+  apply nat.div_eq_of_eq_mul_right (by norm_num : 0 < 2),
+  -- n * (n + 1) = 2 * ∑ (i : ℕ) in range (n + 1), i
   induction n with n ih,
   { simp },
-  rw [finset.sum_range_succ, mul_add 2, ←ih, nat.succ_eq_add_one],
+  -- n.succ * (n.succ + 1) = 2 * ∑ (i : ℕ) in range (n.succ + 1), i
+  --     rw [finset.sum_range_succ, mul_add 2, ←ih, nat.succ_eq_add_one],
+  rw finset.sum_range_succ,
+  -- n.succ * (n.succ + 1) = 2 * (∑ (x : ℕ) in range n.succ, x + n.succ)
+  rw mul_add 2, 
+  -- n.succ * (n.succ + 1) = 2 * ∑ (x : ℕ) in range n.succ, x + 2 * n.succ
+  rw ←ih, 
+  -- n.succ * (n.succ + 1) = n * (n + 1) + 2 * n.succ
+  rw nat.succ_eq_add_one,
+  -- (n + 1) * (n + 1 + 1) = n * (n + 1) + 2 * (n + 1)
   ring
 end
 
-theorem sum_sqr (n : ℕ) : ∑ i in range (n + 1), i^2 = n * (n + 1) * (2 *n + 1) / 6 :=
-sorry
+-- example (f : ℕ → ℕ) (n : ℕ): ∏ x in range n.succ, f x = (∏ x in range n, f x) * f n :=
+-- finset.prod_range_succ f n
+theorem sum_sqr (n : ℕ) : ∑ i in range (n + 1), i^2 = n * (n + 1) * (2 *n + 1) / 6 := begin
+  symmetry,
+  apply nat.div_eq_of_eq_mul_right (by norm_num : 0 < 6),
+  induction n with n ih,
+  { simp },
+  -- ih: n * (n + 1) * (2 * n + 1) = 6 * ∑ (i : ℕ) in range (n + 1), i ^ 2
+  -- n.succ * (n.succ + 1) * (2 * n.succ + 1) = 6 * ∑ (i : ℕ) in range (n.succ + 1), i ^ 2
+  rw finset.sum_range_succ _ (n.succ),
+  -- n.succ * (n.succ + 1) * (2 * n.succ + 1) = 6 * (∑ (x : ℕ) in range n.succ, x ^ 2 + n.succ ^ 2)
+  rw mul_add 6,
+  -- n.succ * (n.succ + 1) * (2 * n.succ + 1) = 6 * ∑ (x : ℕ) in range n.succ, x ^ 2 + 6 * n.succ ^ 2
+  rw ←ih,
+  -- n.succ * (n.succ + 1) * (2 * n.succ + 1) = n * (n + 1) * (2 * n + 1) + 6 * n.succ ^ 2
+  rw nat.succ_eq_add_one,
+  ring,
+end
 
 end
 
@@ -133,8 +195,17 @@ begin
   rw [add, succ_add, ih]
 end
 
-theorem add_assoc (m n k : my_nat) : add (add m n) k = add m (add n k) :=
-sorry
+theorem add_assoc (m n k : my_nat) : add (add m n) k = add m (add n k) := begin
+  induction n with n ih,
+  { rw zero_add, refl },
+  { -- (m.add n.succ).add k = m.add (n.succ.add k) 
+  rw add,
+  rw succ_add,
+  rw ih,
+  rw succ_add,
+  rw add,
+  },
+end
 
 theorem mul_add  (m n k : my_nat) : mul m (add n k) = add (mul m n) (mul m k) :=
 sorry
