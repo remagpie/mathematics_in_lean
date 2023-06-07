@@ -54,11 +54,21 @@ begin
   use [p, pp, pdvd.trans mdvdn]
 end
 
+
 theorem primes_infinite : ∀ n, ∃ p > n, nat.prime p :=
 begin
   intro n,
   have : 2 ≤ nat.factorial (n + 1) + 1,
-    sorry,
+    apply two_le,
+    intro h,
+    linarith [nat.factorial_pos n],
+    intro h,
+    simp at *,
+    linarith [nat.factorial_pos n],
+    simp at *,
+    exact (nat.succ n).exists_infinite_primes,
+  
+  /- 요거 왜 완료 되버린거지??;
   rcases exists_prime_factor this with ⟨p, pp, pdvd⟩,
   refine ⟨p, _, pp⟩,
   show p > n,
@@ -69,6 +79,7 @@ begin
     sorry,
   show false,
     sorry
+  -/
 end
 
 open finset
@@ -99,10 +110,11 @@ section
 variables {α : Type*} [decidable_eq α] (r s t : finset α)
 
 example : (r ∪ s) ∩ (r ∪ t) = r ∪ (s ∩ t) :=
-sorry
+by { ext x, simp, tauto}
+
 
 example : (r \ s \ t) = r \ (s ∪ t) :=
-sorry
+by { ext x, simp, tauto }
 
 end
 example (s : finset ℕ) (n : ℕ) (h : n ∈ s) : n ∣ (∏ i in s, i) :=
@@ -111,7 +123,18 @@ finset.dvd_prod_of_mem _ h
 theorem nat.prime.eq_of_dvd_of_prime {p q : ℕ}
     (prime_p : nat.prime p) (prime_q : nat.prime q) (h : p ∣ q) :
   p = q :=
-sorry
+begin
+  cases h with k hk,
+  rw hk at prime_q,
+  have : p = 1 ∨ p = p * k,
+  { apply prime_q.eq_one_or_self_of_dvd,
+    apply dvd_mul_right },
+  cases this,
+  {exfalso, apply prime_p.ne_one, exact this},
+  { rw this, ring_nf, linarith }
+end
+
+
 
 theorem mem_of_dvd_prod_primes {s : finset ℕ} {p : ℕ} (prime_p : p.prime) :
   (∀ n ∈ s, nat.prime n) →  (p ∣ ∏ n in s, n) → p ∈ s :=
@@ -122,8 +145,23 @@ begin
     linarith [prime_p.two_le] },
   simp [finset.prod_insert ans, prime_p.dvd_mul] at h₀ h₁,
   rw mem_insert,
-  sorry
+  by_cases h₂ : p = a, 
+    { left, 
+      exact h₂ },
+    { right,
+      apply ih,
+      apply h₀.2,
+      cases h₁ with h₁ h₁,
+      { exfalso, 
+        apply h₂,
+        apply prime_p.eq_of_dvd_of_prime,
+        { exact h₀.1 },
+        { exact h₁ },
+      },
+      { exact h₁ }
+    }
 end
+
 
 example (s : finset ℕ) (x : ℕ) : x ∈ s.filter nat.prime ↔ x ∈ s ∧ x.prime :=
 mem_filter
@@ -139,10 +177,15 @@ begin
     simp [s'_def],
     apply h },
   have : 2 ≤ (∏ i in s', i) + 1,
-    sorry,
+  { apply nat.succ_le_succ,
+    apply nat.one_le_of_lt,
+    apply finset.prod_pos,
+    intros _ hp,
+    exact nat.prime.pos (mem_s'.mp hp),
+  },
   rcases exists_prime_factor this with ⟨p, pp, pdvd⟩,
   have : p ∣ (∏ i in s', i),
-    sorry,
+   sorry,
   have : p ∣ 1,
   { convert nat.dvd_sub' pdvd this, simp },
   show false,
@@ -191,7 +234,18 @@ by apply two_le; { intro neq, rw neq at h, norm_num at h }
 
 theorem aux {m n : ℕ} (h₀ : m ∣ n) (h₁ : 2 ≤ m) (h₂ : m < n) :
   (n / m) ∣ n ∧ n / m < n :=
-sorry
+begin
+  split,
+  { use m,
+    rw [mul_comm, nat.mul_div_cancel' h₀] },
+  {
+    apply nat.div_lt_self,
+    apply lt_of_le_of_lt,
+    apply zero_le,
+    apply h₂,
+    apply h₁,
+  }
+end
 
 theorem exists_prime_factor_mod_4_eq_3 {n : nat} (h : n % 4 = 3) :
   ∃ p : nat, p.prime ∧ p ∣ n ∧ p % 4 = 3 :=
@@ -211,8 +265,16 @@ begin
   have : m % 4 = 3 ∨ (n / m) % 4 = 3,
   { apply mod_4_eq_3_or_mod_4_eq_3, rw [neq, h] },
   cases this with h1 h1,
-  { sorry },
-  sorry
+  { obtain ⟨p, pp, pdvd⟩ := nat.exists_prime_and_dvd mne1,
+    use [p, pp, dvd_trans pdvd mdvdn],
+    have h2 : p % 4 = m % 4,
+    { rw h1,
+      sorry
+    },
+    rw h2,
+    exact h1 },
+  { obtain ⟨p, pp, pdvd, p4⟩ := ih _ mltn mge2 h1,
+    use [p, pp, dvd_trans pdvd mdvdn, p4] }
 end
 
 example (m n : ℕ) (s : finset ℕ) (h : m ∈ erase s n) : m ≠ n ∧ m ∈ s :=
