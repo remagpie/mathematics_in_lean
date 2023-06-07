@@ -30,10 +30,22 @@ begin
 end
 
 example (h : ∀ a, ∃ x, f x < a) : ¬ fn_has_lb f :=
-sorry
+begin
+  intro lbf,
+  cases lbf with a ha,
+  specialize h a,
+  cases h with x hx,
+  specialize ha x,
+  linarith,
+end
 
 example : ¬ fn_has_ub (λ x, x) :=
-sorry
+begin
+  intro h,
+  cases h with a ha,
+  have : a + 1 ≤ a := ha (a + 1),
+  linarith,
+end
 
 #check (not_le_of_gt : a > b → ¬ a ≤ b)
 #check (not_lt_of_ge : a ≥ b → ¬ a < b)
@@ -41,10 +53,19 @@ sorry
 #check (le_of_not_gt : ¬ a > b → a ≤ b)
 
 example (h : monotone f) (h' : f a < f b) : a < b :=
-sorry
+begin
+  by_contradiction h1,
+  push_neg at h1,
+  have h2 := h h1,
+  linarith,
+end
 
 example (h : a ≤ b) (h' : f b < f a) : ¬ monotone f :=
-sorry
+begin
+  intro h1,
+  have h2 := h1 h,
+  linarith,
+end
 
 example :
   ¬ ∀ {f : ℝ → ℝ}, monotone f → ∀ {a b}, f a ≤ f b → a ≤ b :=
@@ -52,14 +73,28 @@ begin
   intro h,
   let f := λ x : ℝ, (0 : ℝ),
   have monof : monotone f,
-  { sorry },
+  {
+    intros x y hxy,
+    linarith,
+  },
   have h' : f 1 ≤ f 0,
     from le_refl _,
-  sorry
+  have : (1 : ℝ) ≤ (0 : ℝ) :=
+    h monof h',
+  linarith,
 end
 
 example (x : ℝ) (h : ∀ ε > 0, x < ε) : x ≤ 0 :=
-sorry
+begin
+  by_contradiction contra,
+  have pos : x > 0,
+  {
+    apply lt_of_not_ge,
+    exact contra,
+  },
+  specialize h x pos,
+  linarith,
+end
 
 end
 
@@ -67,16 +102,34 @@ section
 variables {α : Type*} (P : α → Prop) (Q : Prop)
 
 example (h : ¬ ∃ x, P x) : ∀ x, ¬ P x :=
-sorry
+begin
+  intro x,
+  intro h',
+  have : ∃ x, P x := ⟨x, h'⟩,
+  contradiction,
+end
 
 example (h : ∀ x, ¬ P x) : ¬ ∃ x, P x :=
-sorry
+begin
+  intro h',
+  cases h' with x px,
+  have np : ¬ P x := h x,
+  contradiction,
+end
 
 example (h : ¬ ∀ x, P x) : ∃ x, ¬ P x :=
-sorry
+begin
+  push_neg at h,
+  exact h,
+end
 
 example (h : ∃ x, ¬ P x) : ¬ ∀ x, P x :=
-sorry
+begin
+  intros h',
+  cases h with x np,
+  have px : P x := h' x,
+  contradiction,
+end
 
 open_locale classical
 
@@ -91,11 +144,15 @@ begin
 end
 
 example (h : ¬ ¬ Q) : Q :=
-sorry
+begin
+  by_contradiction,
+  contradiction,
+end
 
 example (h : Q) : ¬ ¬ Q :=
-sorry
-
+begin
+  intro,
+  contradiction,
 end
 
 open_locale classical
@@ -103,7 +160,12 @@ section
 variable (f : ℝ → ℝ)
 
 example (h : ¬ fn_has_ub f) : ∀ a, ∃ x, f x > a :=
-sorry
+begin
+  intros a,
+  by_contradiction h',
+  simp at *,
+  exact not_exists.mp h a h',
+end
 
 example (h : ¬ ∀ a, ∃ x, f x > a) : fn_has_ub f :=
 begin
@@ -119,7 +181,11 @@ begin
 end
 
 example (h : ¬ monotone f) : ∃ x y, x ≤ y ∧ f y < f x :=
-sorry
+begin
+  rw [monotone] at h,
+  push_neg at h,
+  exact h,
+end
 
 example (h : ¬ fn_has_ub f) : ∀ a, ∃ x, f x > a :=
 begin
@@ -157,3 +223,4 @@ end
 
 end
 
+end
