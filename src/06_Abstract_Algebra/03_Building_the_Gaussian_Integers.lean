@@ -48,7 +48,48 @@ instance : comm_ring gaussint :=
   mul_one := by { intros, ext; simp },
   left_distrib := by { intros, ext; simp; ring },
   right_distrib := by { intros, ext; simp; ring },
-  mul_comm := by { intros, ext; simp; ring } }
+  mul_comm := by { intros, ext; simp; ring },
+   }
+
+-- instance : comm_ring gaussint := {
+--   zero := _,
+--   one := _,
+--   add := _,
+--   neg := _,
+--   mul := _,
+
+--   add_assoc := _,
+--   zero_add := _,
+--   add_zero := _,
+--   add_left_neg := _,
+--   add_comm := _,
+
+--   mul_assoc := _,
+--   one_mul := _,
+--   mul_one := _,
+--   left_distrib := _,
+--   right_distrib := _,
+--   mul_comm := _ ,
+
+--   nsmul := _,
+--   nsmul_zero' := _,
+--   nsmul_succ' := _,
+--   sub := _,
+--   sub_eq_add_neg := _,
+--   zsmul := _,
+--   zsmul_zero' := _,
+--   zsmul_succ' := _,
+--   zsmul_neg' := _,
+--   int_cast := _,
+--   nat_cast := _,
+--   nat_cast_zero := _,
+--   nat_cast_succ := _,
+--   int_cast_of_nat := _,
+--   int_cast_neg_succ_of_nat := _,
+--   npow := _,
+--   npow_zero' := _,
+--   npow_succ' := _
+--   }
 
 instance : nontrivial gaussint :=
 by { use [0, 1], rw [ne, gaussint.ext_iff], simp }
@@ -90,24 +131,95 @@ by linarith [div'_add_mod' a b]
 end int
 
 theorem sq_add_sq_eq_zero {α : Type*} [linear_ordered_ring α] (x y : α) :
-  x^2 + y^2 = 0 ↔ x = 0 ∧ y = 0 :=
-  sorry
+  x^2 + y^2 = 0 ↔ x = 0 ∧ y = 0 := begin
+  split,
+  { show x ^ 2 + y ^ 2 = 0 → x = 0 ∧ y = 0,
+    intro xsq_add_ysq_zero,
+    have x_nonneg := pow_two_nonneg x,
+    have y_nonneg := pow_two_nonneg y,
+    have x_sq_eq_zero_andy_sq_eq_zero := (add_eq_zero_iff' x_nonneg y_nonneg).mp xsq_add_ysq_zero,
+    rcases x_sq_eq_zero_andy_sq_eq_zero with ⟨x_sq_eq_zero, y_sq_eq_zero⟩ ,
+    have x_eq_zero := pow_eq_zero x_sq_eq_zero,
+    have y_eq_zero := pow_eq_zero y_sq_eq_zero,
+    exact ⟨ x_eq_zero, y_eq_zero ⟩,
+  },
+  { show x = 0 ∧ y = 0 → x ^ 2 + y ^ 2 = 0,
+    rintros ⟨ xeq0, yeq0 ⟩,
+    rw [xeq0, yeq0],
+    norm_num,
+  },
+end
 
 namespace gaussint
 
 def norm (x : gaussint) := x.re^2 + x.im^2
 
-@[simp] theorem norm_nonneg (x : gaussint) : 0 ≤ norm x :=
-sorry
+@[simp] theorem norm_nonneg (x : gaussint) : 0 ≤ norm x := begin
+  rw norm,
+  have re_sq_nonneg := pow_two_nonneg x.re,
+  have im_sq_nonneg := pow_two_nonneg x.im,
+  linarith,
+end
 
-theorem norm_eq_zero (x : gaussint) : norm x = 0 ↔ x = 0 :=
-sorry
+theorem norm_eq_zero (x : gaussint) : norm x = 0 ↔ x = 0 := begin
+  split,
+  { show x.norm = 0 → x = 0,
+    rw norm,
+    intro norm_eq_zero,
+    rcases (sq_add_sq_eq_zero x.re x.im).mp norm_eq_zero with ⟨ re_eq_zero, im_eq_zero ⟩,
+    ext; by assumption,
+  },
+  { show x = 0 → x.norm = 0,
+    rintros xeq0,
+    rw norm,
+    -- ????
+    have x_re_eq0 : x.re = 0, {
+      exact (congr_arg re xeq0).trans rfl,
+    },
+    have x_im_eq0 : x.im = 0, {
+      exact (congr_arg im xeq0).trans rfl,
+    },
+    have x_re_nonneg: x.re ≥ 0, {
+      by linarith
+    },
+    have x_re_sq_nonneg: x.re ^ 2 ≥ 0, {
+      apply sq_nonneg,
+    },
+    have x_im_sq_nonneg: x.im ^ 2 ≥ 0, {
+      apply sq_nonneg,
+    },
+    apply (add_eq_zero_iff' x_re_sq_nonneg x_im_sq_nonneg).mpr,
+    split; { rw sq, rw xeq0, by norm_num, },
+  },
+end
 
-theorem norm_pos (x : gaussint) : 0 < norm x ↔ x ≠ 0 :=
-sorry
+theorem norm_pos (x : gaussint) : 0 < norm x ↔ x ≠ 0 := begin
+  split,
+  { show 0 < x.norm → x ≠ 0,
+    rintros x_norm_nonneg,
+    by_contra xeq0,
+    rw  ← norm_eq_zero at xeq0,
+    linarith,
+  },
+  { show x ≠ 0 → 0 < x.norm,
+    rintros x_nonneg_zero,
+    contrapose! x_nonneg_zero,
+    have : x.norm ≥  0, {
+      apply norm_nonneg x,
+    },
+    have : x.norm = 0, {
+      linarith,
+    },
+    apply ((norm_eq_zero x).mp this)
+  },
+end
 
-theorem norm_mul (x y : gaussint) : norm (x * y) = norm x * norm y :=
-sorry
+-- 다른 사람 어떻게?
+theorem norm_mul (x y : gaussint) : norm (x * y) = norm x * norm y := begin
+  rw [norm, norm, norm],
+  simp,
+  ring,
+end
 
 def conj (x : gaussint) : gaussint := ⟨x.re, -x.im⟩
 

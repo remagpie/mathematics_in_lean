@@ -54,21 +54,69 @@ begin
   use [p, pp, pdvd.trans mdvdn]
 end
 
+
+#check nat.dvd_sub
+-- {k m n : ℕ} (H : n ≤ m) (h₁ : k ∣ m) (h₂ : k ∣ n) : k ∣ m - n 
+#check nat.asc_factorial_pos
+#check nat.dvd_factorial
+-- ∀ {m n}, 0 < m → m ≤ n → m ∣ n!
+
 theorem primes_infinite : ∀ n, ∃ p > n, nat.prime p :=
 begin
   intro n,
-  have : 2 ≤ nat.factorial (n + 1) + 1,
-    sorry,
+  have : 2 ≤ nat.factorial (n + 1) + 1, begin
+    simp,
+    induction n with n ih,
+    { norm_num },
+    {       
+      rw nat.succ_eq_add_one,
+      apply nat.le_trans ih,
+
+      apply nat.add_le_add_iff_right.mpr,
+      simp [nat.factorial],
+      rw nat.succ_eq_add_one,
+
+      rw ← mul_assoc,
+      apply nat.mul_le_mul_right,
+      nth_rewrite 0 ← one_mul (n + 1),
+      apply nat.mul_le_mul_right,
+
+      by linarith,
+      }
+  end,
   rcases exists_prime_factor this with ⟨p, pp, pdvd⟩,
   refine ⟨p, _, pp⟩,
   show p > n,
   by_contradiction ple, push_neg at ple,
   have : p ∣ nat.factorial (n + 1),
-    sorry,
+    {
+      apply nat.dvd_factorial,
+      apply nat.prime.pos pp,
+      by linarith,
+    },
   have : p ∣ 1,
-    sorry,
+    {
+      -- theorem dvd_sub {k m n : ℕ} (H : n ≤ m) (h₁ : k ∣ m) (h₂ : k ∣ n) : k ∣ m - n :=
+      have x: (n + 1).factorial + 1 - (n + 1).factorial = 1,
+        {
+          rw nat.sub_eq_iff_eq_add,
+          rw nat.add_comm,
+          simp,
+        },
+      rw ← x,
+      apply nat.dvd_sub _ pdvd this,
+      linarith,
+    },
   show false,
-    sorry
+    {
+      have : p = 1,
+        {
+          apply nat.eq_one_of_dvd_one,
+          exact this,
+        },
+      rw this at pp,
+      exact nat.not_prime_one pp,
+    },
 end
 
 open finset

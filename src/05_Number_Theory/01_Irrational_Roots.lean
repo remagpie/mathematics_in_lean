@@ -50,24 +50,69 @@ end
 example {m n : ℕ} (coprime_mn : m.coprime n) : m^2 ≠ 2 * n^2 :=
 begin
   intro sqr_eq,
-  have : 2 ∣ m,
-    sorry,
-  obtain ⟨k, meq⟩ := dvd_iff_exists_eq_mul_left.mp this,
+  have m_dvd_2 : 2 ∣ m, {
+    have : 2 ∣ m^2, exact dvd.intro (n ^ 2) (eq.symm sqr_eq),
+    apply nat.prime.dvd_of_dvd_pow nat.prime_two this,
+  },
+  -- obtain ⟨k, meq⟩ := dvd_iff_exists_eq_mul_left.mp this,
+  rcases dvd_iff_exists_eq_mul_left.mp m_dvd_2 with ⟨ k, meq ⟩,
   have : 2 * (2 * k^2) = 2 * n^2,
   { rw [←sqr_eq, meq], ring },
-  have : 2 * k^2 = n^2,
-    sorry,
-  have : 2 ∣ n,
-    sorry,
-  have : 2 ∣ m.gcd n,
-    sorry,
-  have : 2 ∣ 1,
-    sorry,
+  have : 2 * k^2 = n^2, begin
+    apply mul_left_cancel₀ _ this,
+    norm_num,
+  end,
+  have n_dvd_2 : 2 ∣ n, begin
+    have : 2 ∣ n^2, exact dvd.intro (k ^ 2) this,
+    apply nat.prime.dvd_of_dvd_pow nat.prime_two this,
+  end,
+  have m_gcd_n_dvd_2 : 2 ∣ m.gcd n, begin
+    apply (dvd_gcd_iff 2 m n).mpr,
+    exact ⟨m_dvd_2, n_dvd_2⟩,
+  end,
+  have : 2 ∣ 1, {
+    have : m.gcd n = 1, from coprime_mn,
+    rwa this at m_gcd_n_dvd_2,
+  },
   norm_num at this
 end
 
-example {m n p : ℕ} (coprime_mn : m.coprime n) (prime_p : p.prime) : m^2 ≠ p * n^2 :=
-    sorry
+example {m n p : ℕ} (coprime_mn : m.coprime n) (prime_p : p.prime) : m^2 ≠ p * n^2 := begin
+  intro sqr_eq,
+  have m_dvd_p : p ∣ m, {
+    have : p ∣ m^2, exact dvd.intro (n ^ 2) (eq.symm sqr_eq),
+    apply nat.prime.dvd_of_dvd_pow prime_p this,
+  },
+  -- obtain ⟨k, meq⟩ := dvd_iff_exists_eq_mul_left.mp this,
+  rcases dvd_iff_exists_eq_mul_left.mp m_dvd_p with ⟨ k, meq ⟩,
+  have : p * (p * k^2) = p * n^2,
+  { rw [←sqr_eq, meq], ring },
+  have : p * k^2 = n^2, begin
+    apply mul_left_cancel₀ _ this,
+    norm_num,
+    intro p_neq_zero,
+    have : p >= 2, from nat.prime.two_le prime_p,
+    linarith only [this, p_neq_zero],
+  end,
+  have n_dvd_p : p ∣ n, begin
+    have : p ∣ n^2, exact dvd.intro (k ^ 2) this,
+    apply nat.prime.dvd_of_dvd_pow prime_p this,
+  end,
+  have m_gcd_n_dvd_p : p ∣ m.gcd n, begin
+    apply (dvd_gcd_iff p m n).mpr,
+    exact ⟨m_dvd_p, n_dvd_p⟩,
+  end,
+  have : p ∣ 1, {
+    have : m.gcd n = 1, from coprime_mn,
+    rwa this at m_gcd_n_dvd_p,
+  },
+  have p_le_one : p <= 1, {
+    apply nat.le_of_dvd _ this,
+    by norm_num,
+  },
+  have p_ge_two : p >= 2, from nat.prime.two_le prime_p,
+  linarith only [p_le_one, p_ge_two],
+end
 
 #check nat.factors
 #check nat.prime_of_mem_factors
@@ -94,9 +139,20 @@ begin
   have nsqr_nez : n^2 ≠ 0,
     by simpa,
   have eq1 : nat.factorization (m^2) p = 2 * m.factorization p,
-    sorry,
+    begin
+      apply factorization_pow' m 2 p,
+    end,
+  have p_nonzero : p ≠ 0, exact nat.prime.ne_zero prime_p, 
   have eq2 : (p * n^2).factorization p = 2 * n.factorization p + 1,
-    sorry,
+    begin
+      calc (p * n^2).factorization p
+        = p.factorization p + (n^2).factorization p
+          : by apply factorization_mul' p_nonzero nsqr_nez p
+        ... = 1 + (n^2).factorization p
+          : by rw nat.prime.factorization' prime_p
+        ... = (n^2).factorization p + 1 : by ring
+        ... = 2 * n.factorization p + 1 : by rw factorization_pow' n 2 p,
+    end,
   have : (2 * m.factorization p) % 2 = (2 * n.factorization p + 1) % 2,
   { rw [←eq1, sqr_eq, eq2] },
   rw [add_comm, nat.add_mul_mod_self_left, nat.mul_mod_right] at this,

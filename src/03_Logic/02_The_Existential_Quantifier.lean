@@ -40,13 +40,38 @@ begin
   apply fn_ub_add ubfa ubfb
 end
 
+theorem fn_lb_add {f g : ℝ → ℝ} {a b : ℝ}
+    (hfa : fn_lb f a) (hgb : fn_lb g b) :
+  fn_lb (λ x, f x + g x) (a + b) :=
+λ x, add_le_add (hfa x) (hgb x)
+
 example (lbf : fn_has_lb f) (lbg : fn_has_lb g) :
-  fn_has_lb (λ x, f x + g x) :=
-sorry
+  fn_has_lb (λ x, f x + g x) := begin
+  cases lbf with a lbfa,
+  cases lbg with b lbgb,
+  use a + b,
+  apply fn_lb_add lbfa lbgb,
+end
+
+theorem fn_ub_mul {f : ℝ → ℝ} {a c: ℝ}
+    (hfa : fn_ub f a) (cge0 : 0 ≤ c):
+  fn_ub (λ x, c * f x) (c * a) := 
+λ x, mul_le_mul_of_nonneg_left (hfa x) cge0 
+--   begin
+--   intros x,
+--   change  c * f x ≤ c * a,
+--   apply mul_le_mul_of_nonneg_left,
+--   apply hfa x,
+--   apply cge0,
+-- end
+-- λ x, mul_le_mul (le_refl c) (hfa x) fage0 cge0 
 
 example {c : ℝ} (ubf : fn_has_ub f) (h : c ≥ 0):
-  fn_has_ub (λ x, c * f x) :=
-sorry
+  fn_has_ub (λ x, c * f x) := begin
+  cases ubf with a ubfa,
+  use c * a,
+  apply fn_ub_mul ubfa h,
+end
 
 example (ubf : fn_has_ub f) (ubg : fn_has_ub g) :
   fn_has_ub (λ x, f x + g x) :=
@@ -88,6 +113,7 @@ theorem sum_of_squares_mul' {x y : α}
     (sosx : sum_of_squares x) (sosy : sum_of_squares y) :
   sum_of_squares (x * y) :=
 begin
+  -- 뭔지 모르겠네
   rcases sosx with ⟨a, b, rfl⟩,
   rcases sosy with ⟨c, d, rfl⟩,
   use [a*c - b*d, a*d + b*c],
@@ -107,7 +133,18 @@ begin
 end
 
 example (divab : a ∣ b) (divac : a ∣ c) : a ∣ (b + c) :=
-sorry
+begin
+  rcases divab with ⟨ d, rfl ⟩,
+  rcases divac with ⟨ e, rfl ⟩,
+  use (d + e), ring,
+end
+-- begin
+--   cases divab with d beqad,
+--   cases divac with e ceqae,
+--   rw beqad,
+--   rw ceqae,
+--   use (d + e), ring,
+-- end
 
 end
 
@@ -122,7 +159,15 @@ begin
 end
 
 example {c : ℝ} (h : c ≠ 0) : surjective (λ x, c * x) :=
-sorry
+begin
+  intro x,
+  use x / c,
+  dsimp,
+  rw ← mul_div_assoc,
+  rw mul_comm,
+  rw (mul_div_cancel x),
+  exact h,
+end
 
 example (x y : ℝ) (h : x - y ≠ 0) : (x^2 - y^2) / (x - y) = x + y :=
 by { field_simp [h], ring }
@@ -144,6 +189,16 @@ variables {g : β → γ} {f : α → β}
 
 example (surjg : surjective g) (surjf : surjective f) :
   surjective (λ x, g (f x)) :=
-sorry
+  begin
+  intro x,
+  dsimp,
+  -- cases 
+  -- cases surjg with aa bb,
+  cases surjg x with y gyx,
+  cases surjf y with z fzy,
+  use z,
+  rw fzy,
+  rw gyx,
+end
 
 end

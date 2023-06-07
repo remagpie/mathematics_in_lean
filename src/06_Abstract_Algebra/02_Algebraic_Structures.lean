@@ -56,11 +56,13 @@ namespace point
 
 def add (a b : point) : point := ⟨a.x + b.x, a.y + b.y, a.z + b.z⟩
 
-def neg (a b : point) : point := sorry
+def neg (a b : point) : point := ⟨a.x - b.x, a.y - b.y, a.z - b.z⟩ 
 
-def zero : point := sorry
+def zero : point := ⟨ 0, 0, 0 ⟩ 
 
-def add_group_point : add_group point := sorry
+def add_group_point : add_group₁ point := {
+  add := λ f g, f.add g,
+}
 
 end point
 
@@ -150,5 +152,12 @@ end
 
 class add_group₂ (α : Type*) :=
 (add : α → α → α)
--- fill in the rest
+(neg: α → α → α)
+(zero: α)
 
+instance : add_group₂ point :=
+{
+  add := point.add,
+  neg  := point.neg,
+  zero := point.zero,
+}

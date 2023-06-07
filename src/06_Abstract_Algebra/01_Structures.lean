@@ -98,15 +98,18 @@ example : ∀ a b : point, add a b = add b a :=
 λ ⟨xa, ya, za⟩ ⟨xb, yb, zb⟩, by simp [add, add_comm]
 
 protected theorem add_assoc (a b c : point) :
-  (a.add b).add c = a.add (b.add c) :=
-sorry
+  (a.add b).add c = a.add (b.add c) := begin
+  ext; apply add_assoc,
+end
 
-def smul (r : ℝ) (a : point) : point :=
-sorry
+def smul (r : ℝ) (a : point) : point := begin
+  exact ⟨ r * a.x, r * a.y, r * a.z ⟩
+end
 
 theorem smul_distrib (r : ℝ) (a b : point) :
-  (smul r a).add (smul r b) = smul r (a.add b) :=
-sorry
+  (smul r a).add (smul r b) = smul r (a.add b) := begin
+  ext; simp [smul, add, mul_add],
+end
 
 end point
 
@@ -144,8 +147,29 @@ def midpoint (a b : standard_two_simplex) : standard_two_simplex :=
 def weighted_average (lambda : real)
     (lambda_nonneg : 0 ≤ lambda) (lambda_le : lambda ≤ 1)
     (a b : standard_two_simplex) :
-  standard_two_simplex :=
-sorry
+  standard_two_simplex := {
+    x := a.x * lambda + (1 - lambda) * b.x,
+    y := a.y * lambda + (1 - lambda) * b.y,
+    z := a.z * lambda + (1 - lambda) * b.z,
+    x_nonneg := begin
+      apply add_nonneg,
+      { exact mul_nonneg a.x_nonneg lambda_nonneg },
+      -- TODO: 다른 사람 어떻게 했나 찾기.
+      { exact mul_nonneg (by linarith : ((1 - lambda) >= 0)) b.x_nonneg },
+    end,
+    y_nonneg := add_nonneg
+      (mul_nonneg a.y_nonneg lambda_nonneg)
+      (mul_nonneg (by linarith) b.y_nonneg),
+    z_nonneg := add_nonneg
+      (mul_nonneg a.z_nonneg lambda_nonneg)
+      (mul_nonneg (by linarith) b.z_nonneg),
+    sum_eq := begin
+      calc a.x * lambda + (1 - lambda) * b.x + (a.y * lambda + (1 - lambda) * b.y) + (a.z * lambda + (1 - lambda) * b.z) 
+            = (a.x + a.y + a.z) * lambda + (b.x + b.y + b.z) * (1 - lambda) : by ring
+        ... = lambda + (1 - lambda) : by { rw [a.sum_eq, b.sum_eq], by ring, }
+        ... = 1 : by ring,
+      end,
+  }
 
 end standard_two_simplex
 
@@ -174,7 +198,27 @@ def midpoint (n : ℕ) (a b : standard_simplex n) : standard_simplex n :=
       field_simp
     end  }
 
+def weighted_average (n: ℕ) (lambda : real)
+    (lambda_nonneg : 0 ≤ lambda) (lambda_le : lambda ≤ 1)
+    (a b : standard_simplex n) : standard_simplex n := {
+      v := λ i, (a.v i * lambda + b.v i * (1 - lambda)),
+      nonneg := begin
+      -- 다른 사람 보기
+        intro i,
+        let a_nonneg := a.nonneg i,
+        let b_nonneg := b.nonneg i,
+        let one_m_lambda_nonneg := (by linarith : (1 - lambda) ≥ 0),
+        apply add_nonneg; apply mul_nonneg,
+        repeat { assumption },
+      end,
+      sum_eq_one := begin
+      -- 왜 simp로 다되지
+        simp [finset.sum_add_distrib, ←finset.sum_mul, a.sum_eq_one, b.sum_eq_one],
+      end,
+    }
+
 end standard_simplex
+
 
 structure is_linear (f : ℝ → ℝ) :=
 (is_additive : ∀ x y, f (x + y) = f x + f y)
