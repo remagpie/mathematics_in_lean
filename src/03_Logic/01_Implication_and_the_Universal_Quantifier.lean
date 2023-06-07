@@ -20,7 +20,9 @@ end
 
 lemma my_lemma2 : ∀ {x y ε : ℝ},
   0 < ε → ε ≤ 1 → abs x < ε → abs y < ε → abs (x * y) < ε :=
-sorry
+begin
+  apply my_lemma,
+end
 
 section
   variables a b δ : ℝ
@@ -34,7 +36,11 @@ lemma my_lemma3 : ∀ {x y ε : ℝ},
   0 < ε → ε ≤ 1 → abs x < ε → abs y < ε → abs (x * y) < ε :=
 begin
   intros x y ε epos ele1 xlt ylt,
-  sorry
+  calc
+    abs (x * y) = abs x * abs y : by rw [abs_mul]
+    ... ≤ abs x * ε             : by { apply mul_le_mul, refl, exact ylt.le, apply abs_nonneg, apply abs_nonneg}
+    ... < 1 * ε                 : by { apply (mul_lt_mul_right epos).mpr (lt_of_lt_of_le xlt ele1) }
+    ... = ε                     : by rw one_mul,
 end
 
 lemma my_lemma4 : ∀ {x y ε : ℝ},
@@ -42,10 +48,10 @@ lemma my_lemma4 : ∀ {x y ε : ℝ},
 begin
   intros x y ε epos ele1 xlt ylt,
   calc
-    abs (x * y) = abs x * abs y : sorry
-    ... ≤ abs x * ε             : sorry
-    ... < 1 * ε                 : sorry
-    ... = ε                     : sorry
+    abs (x * y) = abs x * abs y : by rw [abs_mul]
+    ... ≤ abs x * ε             : by { apply mul_le_mul, refl, exact ylt.le, apply abs_nonneg, apply abs_nonneg}
+    ... < 1 * ε                 : by { apply (mul_lt_mul_right epos).mpr (lt_of_lt_of_le xlt ele1) }
+    ... = ε                     : by rw one_mul,
 end
 
 def fn_ub (f : ℝ → ℝ) (a : ℝ) : Prop := ∀ x, f x ≤ a
@@ -66,17 +72,72 @@ end
 
 example (hfa : fn_lb f a) (hgb : fn_lb g b) :
   fn_lb (λ x, f x + g x) (a + b) :=
-sorry
+begin
+  intro x,
+  dsimp,
+  apply add_le_add,
+  apply hfa,
+  apply hgb,
+end
+
+-- ↑ChatGPT
+example (hfa : fn_lb f a) (hgb : fn_lb g b) :
+  fn_lb (λ x, f x + g x) (a + b) :=
+begin
+  intro x,
+  specialize hfa x,
+  specialize hgb x,
+  exact add_le_add hfa hgb,
+end
+
 
 example (nnf : fn_lb f 0) (nng : fn_lb g 0) :
   fn_lb (λ x, f x * g x) 0 :=
-sorry
+begin
+  intro x,
+  dsimp,
+  apply mul_nonneg,
+  apply nnf,
+  apply nng,
+end
+
+-- ↑ChatGPT
+example (nnf : fn_lb f 0) (nng : fn_lb g 0) :
+  fn_lb (λ x, f x * g x) 0 :=
+begin
+  intro x,
+  specialize nnf x,
+  specialize nng x,
+  exact mul_nonneg nnf nng,
+end
 
 example (hfa : fn_ub f a) (hfb : fn_ub g b)
     (nng : fn_lb g 0) (nna : 0 ≤ a) :
   fn_ub (λ x, f x * g x) (a * b) :=
-sorry
+begin
+  intro x,
+  dsimp,
+  apply mul_le_mul,
+  apply hfa,
+  apply hfb,
+  apply nng,
+  apply nna,
+  -- apply [hfa, hfb, nng, nna],
+end
 
+-- ↑ChatGPT
+example (hfa : fn_ub f a) (hfb : fn_ub g b)
+    (nng : fn_lb g 0) (nna : 0 ≤ a) :
+  fn_ub (λ x, f x * g x) (a * b) :=
+begin
+  intro x,
+  specialize hfa x,
+  specialize hfb x,
+  specialize nng x,
+  have hfg := mul_le_mul_of_nonneg_left hfb nna,
+  have hgf := mul_le_mul_of_nonneg_right hfa nng,
+  exact le_trans hgf hfg,
+end
 end
 
 section
@@ -111,13 +172,25 @@ example (mf : monotone f) (mg : monotone g) :
   monotone (λ x, f x + g x) :=
 λ a b aleb, add_le_add (mf aleb) (mg aleb)
 
+#check mul_le_mul
+
 example {c : ℝ} (mf : monotone f) (nnc : 0 ≤ c) :
   monotone (λ x, c * f x) :=
-sorry
+begin
+  intro x,
+  intro y,
+  intro aleb,
+  exact monotone.const_mul mf nnc aleb,
+end
 
 example (mf : monotone f) (mg : monotone g) :
   monotone (λ x, f (g x)) :=
-sorry
+begin
+  intro x,
+  intro y,
+  intro aleb,
+  library_search,
+end
 
 def fn_even (f : ℝ → ℝ) : Prop := ∀ x, f x = f (-x)
 def fn_odd (f : ℝ → ℝ) : Prop := ∀ x, f x = - f (-x)
@@ -131,14 +204,28 @@ begin
 end
 
 example (of : fn_odd f) (og : fn_odd g) : fn_even (λ x, f x * g x) :=
-sorry
+begin
+  intro x,
+  dsimp,
+  rw [of, og],
+  exact neg_mul_neg (f (-x)) (g (-x)),
+end
 
 example (ef : fn_even f) (og : fn_odd g) : fn_odd (λ x, f x * g x) :=
-sorry
+begin
+  intro x,
+  dsimp,
+  rw [ef, og],
+  exact mul_neg (f (-x)) (g (-x)),
+end
 
 example (ef : fn_even f) (og : fn_odd g) : fn_even (λ x, f (g x)) :=
-sorry
-
+begin
+  intro x,
+  dsimp,
+  rw [ef, og],
+  rw neg_neg (g (-x)),
+end
 end
 
 section
@@ -150,7 +237,12 @@ by { intros x xs, exact xs }
 theorem subset.refl : s ⊆ s := λ x xs, xs
 
 theorem subset.trans : r ⊆ s → s ⊆ t → r ⊆ t :=
-sorry
+begin
+  intros x y z w,
+  apply y,
+  apply x,
+  exact w,
+end
 
 end
 
@@ -162,7 +254,15 @@ variables (s : set α) (a b : α)
 def set_ub (s : set α) (a : α) := ∀ x, x ∈ s → x ≤ a
 
 example (h : set_ub s a) (h' : a ≤ b) : set_ub s b :=
-sorry
+begin
+  intros x y,
+  have x_le_a: x ≤ a,
+  { exact h x y },
+  have a_le_b : a ≤ b,
+  { exact h'},
+  apply le_trans x_le_a,
+  exact a_le_b,
+end
 
 end
 
@@ -176,13 +276,19 @@ begin
 end
 
 example {c : ℝ} (h : c ≠ 0) : injective (λ x, c * x) :=
-sorry
+begin
+  intros x y z,
+  exact (mul_right_inj' h).mp z,
+end
 
 variables {α : Type*} {β : Type*} {γ : Type*}
 variables {g : β → γ} {f : α → β}
 
 example (injg : injective g) (injf : injective f) :
   injective (λ x, g (f x)) :=
-sorry
+begin
+  intros a b c,
+  library_search,
+end
 
 end
